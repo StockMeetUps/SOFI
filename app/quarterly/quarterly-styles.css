@@ -1,0 +1,283 @@
+/* Quarterly Model Specific Styles */
+
+/* Quarterly filter containers - Compact */
+.quarterly-filter {
+    padding: 1px 4px;
+    transition: all 0.2s ease;
+}
+
+.quarterly-filter.slider-changed {
+    background: linear-gradient(135deg, rgba(0, 165, 229, 0.06) 0%, rgba(33, 150, 243, 0.03) 100%);
+}
+
+.slider-row-single {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    width: 100%;
+    padding: 0;
+}
+
+.slider-row-single .slider-value {
+    min-width: 36px;
+    font-size: 0.58em;
+    font-weight: 700;
+    color: #00A5E5;
+    text-align: right;
+}
+
+/* Delta display (change from default) */
+.slider-delta {
+    font-size: 0.5em;
+    font-weight: 600;
+    min-width: 24px;
+    text-align: left;
+    transition: all 0.2s ease;
+}
+
+.slider-delta.delta-positive {
+    color: #4caf50;
+}
+
+.slider-delta.delta-negative {
+    color: #f44336;
+}
+
+/* Impact display - Compact */
+.slider-impact {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 3px;
+    margin-top: 1px;
+    min-height: 0;
+}
+
+.slider-impact .impact-item {
+    font-size: 0.58em;
+    color: #555;
+    background: rgba(0, 165, 229, 0.1);
+    padding: 1px 4px;
+    border-radius: 2px;
+    white-space: nowrap;
+}
+
+.slider-impact .impact-item strong {
+    color: #00A5E5;
+    font-weight: 700;
+}
+
+.slider-impact .impact-item.impact-total {
+    background: rgba(76, 175, 80, 0.15);
+    border: 1px solid rgba(76, 175, 80, 0.3);
+}
+
+.slider-impact .impact-item.impact-total strong {
+    color: #4caf50;
+}
+
+.slider-row-single input[type="range"] {
+    flex: 1;
+    min-width: 50px;
+    height: 6px;
+    margin: 0;
+    background: #e8e8e8;
+    border-radius: 3px;
+    outline: none;
+    -webkit-appearance: none;
+    cursor: pointer;
+}
+
+.slider-row-single input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: #00A5E5;
+    cursor: pointer;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+    border: 2px solid #fff;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.slider-row-single input[type="range"]::-webkit-slider-thumb:hover {
+    transform: scale(1.1);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.4);
+}
+
+.slider-row-single input[type="range"]::-moz-range-thumb {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: #00A5E5;
+    cursor: pointer;
+    border: 2px solid #fff;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+.slider-row-single input[type="range"]::-moz-range-track {
+    background: #e8e8e8;
+    height: 6px;
+    border-radius: 3px;
+}
+
+.slider-row-single input[type="range"]::-moz-range-progress {
+    background: #00A5E5;
+    height: 6px;
+    border-radius: 3px;
+}
+
+/* Table cell styling for quarterly data */
+.past-performance-cell {
+    background-color: rgba(76, 175, 80, 0.1);
+}
+
+.projection-cell {
+    background-color: rgba(33, 150, 243, 0.15);
+    font-weight: 600;
+}
+
+.total-cell {
+    background-color: rgba(0, 0, 0, 0.05);
+}
+
+/* Quarterly table specific styles */
+#quarterlyTable th:first-child,
+#quarterlyTable td:first-child {
+    text-align: left;
+    font-weight: 500;
+}
+
+#quarterlyTable th {
+    background-color: #1a1a1a;
+    color: #ffffff;
+    padding: 12px 10px;
+}
+
+#quarterlyTable td {
+    padding: 10px;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+#quarterlyTable tbody tr:hover {
+    background-color: #f5f5f5;
+}
+
+/* Wider controls for quarterly model */
+.model-controls {
+    width: 18%;
+    max-width: 220px;
+    min-width: 180px;
+}
+
+/* Chart bar colors for actual vs projection */
+.chart-actual {
+    background-color: rgba(0, 165, 229, 0.7);
+}
+
+.chart-projection {
+    background-color: rgba(33, 150, 243, 0.7);
+}
+
+/* Summary cards enhancement */
+.valuation-card .metric-value {
+    font-size: 1.5em;
+}
+
+/* Responsive adjustments */
+@media (max-width: 1200px) {
+    .model-controls {
+        width: 100%;
+        max-width: 100%;
+    }
+    
+    .quarterly-filter {
+        padding: 10px 12px;
+    }
+}
+
+/* Increase height for Members and Products charts */
+.chart-container:has(#membersChart) canvas,
+.chart-container:has(#productsChart) canvas {
+    max-height: 380px !important;
+}
+
+@media (max-width: 768px) {
+    .slider-row-single {
+        gap: 6px;
+    }
+    
+    .slider-row-single .slider-value {
+        min-width: 45px;
+        font-size: 0.75em;
+    }
+    
+    .slider-delta {
+        font-size: 0.65em;
+        min-width: 30px;
+    }
+    
+    .slider-impact {
+        gap: 4px;
+    }
+    
+    .slider-impact .impact-item {
+        font-size: 0.65em;
+        padding: 2px 4px;
+    }
+    
+    #quarterlyTable {
+        font-size: 0.8em;
+    }
+    
+    #quarterlyTable th,
+    #quarterlyTable td {
+        padding: 8px 6px;
+    }
+}
+
+@media (max-width: 480px) {
+    .slider-row-single .slider-value {
+        min-width: 40px;
+        font-size: 0.7em;
+    }
+    
+    .slider-delta {
+        font-size: 0.6em;
+        min-width: 25px;
+    }
+    
+    .slider-impact .impact-item {
+        font-size: 0.6em;
+    }
+    
+    #quarterlyTable {
+        font-size: 0.75em;
+    }
+    
+    #quarterlyTable th,
+    #quarterlyTable td {
+        padding: 6px 4px;
+    }
+}
+
+/* Chart note styling */
+.chart-note {
+    font-size: 0.7em;
+    color: #ff9800;
+    font-style: italic;
+    font-weight: bold;
+    margin: -5px 0 5px 0;
+    padding: 0;
+    text-align: center;
+}
+
+.chart-note-bottom {
+    font-size: 0.7em;
+    color: #ff9800;
+    font-style: italic;
+    font-weight: bold;
+    margin: 5px 0 0 0;
+    padding: 0;
+    text-align: center;
+}

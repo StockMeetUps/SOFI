@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SOFI Interactive Simulation Model</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f0f2f5;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* ===== Tab Navigation Bar ===== */
+        .tab-nav {
+            display: flex;
+            align-items: center;
+            background: linear-gradient(135deg, #0a0a1a 0%, #1a1a3e 50%, #0d2137 100%);
+            padding: 0 24px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            min-height: 52px;
+        }
+
+        .tab-nav-brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-right: 32px;
+            padding: 10px 0;
+            white-space: nowrap;
+        }
+
+        .tab-nav-brand .brand-logo {
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, #00A5E5 0%, #0077b6 100%);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 900;
+            font-size: 14px;
+            color: #fff;
+            letter-spacing: -0.5px;
+            flex-shrink: 0;
+        }
+
+        .tab-nav-brand .brand-text {
+            display: flex;
+            flex-direction: column;
+            line-height: 1.15;
+        }
+
+        .tab-nav-brand .brand-name {
+            font-size: 15px;
+            font-weight: 700;
+            color: #ffffff;
+            letter-spacing: 0.5px;
+        }
+
+        .tab-nav-brand .brand-subtitle {
+            font-size: 9.5px;
+            font-weight: 500;
+            color: rgba(255, 255, 255, 0.55);
+            letter-spacing: 0.8px;
+            text-transform: uppercase;
+        }
+
+        .tab-nav-divider {
+            width: 1px;
+            height: 28px;
+            background: rgba(255, 255, 255, 0.15);
+            margin-right: 8px;
+        }
+
+        .tab-buttons {
+            display: flex;
+            align-items: stretch;
+            gap: 0;
+            height: 52px;
+        }
+
+        .tab-btn {
+            position: relative;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 0 24px;
+            background: transparent;
+            border: none;
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 13.5px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            letter-spacing: 0.3px;
+            white-space: nowrap;
+            height: 100%;
+        }
+
+        .tab-btn::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 3px;
+            background: #00A5E5;
+            border-radius: 3px 3px 0 0;
+            transition: width 0.3s ease;
+        }
+
+        .tab-btn:hover {
+            color: rgba(255, 255, 255, 0.9);
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .tab-btn:hover::after {
+            width: 50%;
+        }
+
+        .tab-btn.active {
+            color: #ffffff;
+        }
+
+        .tab-btn.active::after {
+            width: 80%;
+            background: linear-gradient(90deg, #00A5E5, #00d4ff);
+        }
+
+        .tab-btn .tab-icon {
+            font-size: 16px;
+            opacity: 0.8;
+        }
+
+        .tab-btn.active .tab-icon {
+            opacity: 1;
+        }
+
+        .tab-btn .tab-badge {
+            font-size: 9px;
+            font-weight: 700;
+            padding: 2px 6px;
+            border-radius: 10px;
+            background: rgba(0, 165, 229, 0.2);
+            color: #00A5E5;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+
+        .tab-btn.active .tab-badge {
+            background: rgba(0, 165, 229, 0.3);
+            color: #00d4ff;
+        }
+
+        /* ===== iframe Container ===== */
+        .tab-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        .tab-frame {
+            width: 100%;
+            flex: 1;
+            border: none;
+            display: none;
+            min-height: calc(100vh - 52px);
+        }
+
+        .tab-frame.active {
+            display: block;
+        }
+
+        /* ===== Responsive ===== */
+        @media (max-width: 768px) {
+            .tab-nav {
+                padding: 0 12px;
+                min-height: 48px;
+            }
+
+            .tab-nav-brand {
+                margin-right: 16px;
+            }
+
+            .tab-nav-brand .brand-logo {
+                width: 28px;
+                height: 28px;
+                font-size: 12px;
+            }
+
+            .tab-nav-brand .brand-name {
+                font-size: 13px;
+            }
+
+            .tab-nav-brand .brand-subtitle {
+                font-size: 8px;
+            }
+
+            .tab-buttons {
+                height: 48px;
+            }
+
+            .tab-btn {
+                padding: 0 14px;
+                font-size: 12px;
+            }
+
+            .tab-btn .tab-badge {
+                display: none;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .tab-nav-brand .brand-text {
+                display: none;
+            }
+
+            .tab-nav-brand {
+                margin-right: 8px;
+            }
+
+            .tab-nav-divider {
+                margin-right: 4px;
+            }
+
+            .tab-btn {
+                padding: 0 10px;
+                font-size: 11px;
+                gap: 5px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Tab Navigation -->
+    <nav class="tab-nav">
+        <div class="tab-nav-brand">
+            <div class="brand-logo">S</div>
+            <div class="brand-text">
+                <span class="brand-name">SOFI</span>
+                <span class="brand-subtitle">Interactive Simulation</span>
+            </div>
+        </div>
+        <div class="tab-nav-divider"></div>
+        <div class="tab-buttons">
+            <button class="tab-btn active" onclick="switchTab('yearly')" id="tab-yearly">
+                <span class="tab-icon">&#x1F4C8;</span>
+                Yearly Projections
+                <span class="tab-badge">2030</span>
+            </button>
+            <button class="tab-btn" onclick="switchTab('quarterly')" id="tab-quarterly">
+                <span class="tab-icon">&#x1F4CA;</span>
+                Quarterly Projections
+                <span class="tab-badge">Q1 FY26</span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- Tab Content (iframes) -->
+    <div class="tab-content">
+        <iframe id="frame-yearly" class="tab-frame active" src="yearly/index.html" title="Yearly Projections"></iframe>
+        <iframe id="frame-quarterly" class="tab-frame" src="" title="Quarterly Projections"></iframe>
+    </div>
+
+    <script>
+        // Track loaded state
+        const loaded = { yearly: true, quarterly: false };
+
+        function switchTab(tabName) {
+            // Update buttons
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById('tab-' + tabName).classList.add('active');
+
+            // Update frames
+            document.querySelectorAll('.tab-frame').forEach(frame => frame.classList.remove('active'));
+            const frame = document.getElementById('frame-' + tabName);
+            frame.classList.add('active');
+
+            // Lazy load quarterly iframe on first switch
+            if (tabName === 'quarterly' && !loaded.quarterly) {
+                frame.src = 'quarterly/index.html';
+                loaded.quarterly = true;
+            }
+        }
+    </script>
+</body>
+</html>

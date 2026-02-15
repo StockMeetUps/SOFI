@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SOFI : FY25 Actuals & Q1 2026 Quarterly Simulation Model</title>
+    <link rel="stylesheet" href="styles.css?v=20260214">
+    <link rel="stylesheet" href="quarterly-styles.css?v=20260214">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js" onerror="console.log('Datalabels plugin failed to load')"></script>
+    <style>
+        /* Remove extra top margin for iframe embedding */
+        body { margin: 0; padding: 0 20px 20px 20px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header-wrapper">
+            <header>
+                <h1>SOFI : FY25 Actuals & Q1 2026 Quarterly Simulation Model</h1>
+                <p class="disclaimer-note">
+                    <strong>Note:</strong> Not Investment Advice. This interactive SOFI quarterly model shows Q1-Q4 FY25 actuals and Q1 2026 projections. Q1 2026 values are adjustable via sliders. Q4 2025 was a record quarter: $1.025B revenue (+40% YoY), $174M net income, record 1M+ new members (13.7M total), and Rule of 40 score of 68%. SoFi became the first nationally chartered bank to launch crypto trading and its own stablecoin (SoFiUSD). 2026 guidance: ~$4.655B revenue (~30% growth), Lending +23%, FS +40%+, Tech +20%. <strong>Credit:</strong> Data from SoFi Q4 2025 Earnings Report (Jan 30, 2026)
+                </p>
+            </header>
+        </div>
+
+        <section class="valuation-section">
+            <h2 class="section-title-with-price">
+                Q1 2026 Outlook <span class="inline-price">
+                    <span class="price-label-inline">Current SOFI Stock Price:</span>
+                    <span class="price-value-inline" id="currentStockPrice">$26.60</span>
+                    <span class="price-change-inline" id="priceChange"></span>
+                </span>
+            </h2>
+            <div class="valuation-grid">
+                <div class="valuation-card">
+                    <h3>Q1 2026 Members (Proj)</h3>
+                    <div class="metric-value" id="q1_2026Members">0M</div>
+                    <div class="metric-label">Millions</div>
+                </div>
+                <div class="valuation-card">
+                    <h3>Q1 2026 Revenue (Proj)</h3>
+                    <div class="metric-value" id="q1_2026Revenue">$0</div>
+                    <div class="metric-label">Millions</div>
+                </div>
+                <div class="valuation-card">
+                    <h3>Q1 2026 Net Income (Proj)</h3>
+                    <div class="metric-value" id="q1_2026NetIncome">$0</div>
+                    <div class="metric-label">Millions</div>
+                </div>
+                <div class="valuation-card">
+                    <h3>Q1 2026 EPS (Proj)</h3>
+                    <div class="metric-value" id="q1_2026EPS">0¢</div>
+                    <div class="metric-label">Cents</div>
+                </div>
+            </div>
+        </section>
+
+        <div class="charts-and-controls-container">
+            <div class="charts-column">
+                <section class="trend-charts-section">
+                    <div class="trend-charts-grid">
+                        <div class="chart-container">
+                            <h3>SOFI: Net Revenue by Quarter</h3>
+                            <canvas id="revenueChart"></canvas>
+                        </div>
+                        <div class="chart-container">
+                            <h3>SOFI: Members Growth</h3>
+                            <canvas id="membersChart"></canvas>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="charts-section">
+                    <div class="trend-charts-grid">
+                        <div class="chart-container">
+                            <h3>SOFI: Revenue Segments</h3>
+                            <canvas id="segmentChart"></canvas>
+                        </div>
+                        <div class="chart-container">
+                            <h3>SOFI: Net Income by Quarter</h3>
+                            <p class="chart-note">Q4 FY25 includes $30M one-time CHYM termination fee (Galileo contract)</p>
+                            <canvas id="netIncomeChart"></canvas>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="charts-section">
+                    <div class="trend-charts-grid">
+                        <div class="chart-container">
+                            <h3>SOFI: Revenue Segment Growth QoQ %</h3>
+                            <canvas id="segmentGrowthChart"></canvas>
+                        </div>
+                        <div class="chart-container">
+                            <h3>SOFI: EPS Trend</h3>
+                            <canvas id="epsChart"></canvas>
+                            <p class="chart-note-bottom">Q4 FY25 includes one-time 2¢ EPS from $CHYM termination fee</p>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="charts-section">
+                    <div class="trend-charts-grid">
+                        <div class="chart-container">
+                            <h3>SOFI: Products Growth</h3>
+                            <canvas id="productsChart"></canvas>
+                        </div>
+                        <div class="chart-container">
+                            <h3>SOFI: Operating Expenses</h3>
+                            <canvas id="expensesChart"></canvas>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="charts-section">
+                    <div class="trend-charts-grid">
+                        <div class="chart-container">
+                            <h3>SOFI: Net Margin %</h3>
+                            <canvas id="marginChart"></canvas>
+                        </div>
+                        <div class="chart-container">
+                            <h3>SOFI: EBITDA by Quarter</h3>
+                            <canvas id="ebitdaChart"></canvas>
+                        </div>
+                    </div>
+                </section>
+            </div>
+
+            <section class="model-controls">
+                <h2 class="model-controls-title">
+                    Q1 2026 Sliders
+                    <button class="btn-primary btn-small" onclick="resetControls()">Reset</button>
+                </h2>
+                <div id="quarterlyControlsContainer"></div>
+            </section>
+        </div>
+
+        <section class="assumptions-section">
+            <h2>Quarterly Data Summary</h2>
+            <div id="assumptionsContent"></div>
+        </section>
+
+        <section class="financial-projections">
+            <h2>FY25 Quarterly Actuals & Q1 2026 Projection</h2>
+            <div class="table-container">
+                <table id="quarterlyTable">
+                    <thead>
+                        <tr>
+                            <th>Metric</th>
+                            <th>Q1 FY25</th>
+                            <th>Q2 FY25</th>
+                            <th>Q3 FY25</th>
+                            <th>Q4 FY25</th>
+                            <th>Q1 FY26 (Proj)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="quarterlyBody">
+                    </tbody>
+                </table>
+            </div>
+            <div class="legend">
+                <div class="legend-item">
+                    <span class="legend-color past-performance"></span>
+                    <span>Q1-Q4 FY25 Actuals</span>
+                </div>
+                <div class="legend-item">
+                    <span class="legend-color projection"></span>
+                    <span>Q1 FY26 Projection</span>
+                </div>
+            </div>
+            <p class="chart-note-bottom">Q4 FY25 Net Income includes $30M one-time CHYM termination fee from Galileo contract (~2¢ EPS impact)</p>
+            <p class="dataset-credit">
+                Credit: Data from SoFi Q4 2025 Earnings Report (Jan 30, 2026) & Community Analysis
+            </p>
+        </section>
+    </div>
+
+    <script src="quarterly-model.js?v=20260214"></script>
+</body>
+</html>
