@@ -54,7 +54,8 @@ header h1 {
     line-height: 1.1;
 }
 
-.disclaimer-note {
+.disclaimer-note,
+.header-note {
     font-size: 0.833em;
     color: #666666;
     margin-top: 0;
@@ -67,13 +68,19 @@ header h1 {
     overflow-wrap: break-word;
 }
 
-.disclaimer-note a {
+.header-note p {
+    margin: 0;
+}
+
+.disclaimer-note a,
+.header-note a {
     color: #00A5E5;
     text-decoration: none;
     font-weight: 500;
 }
 
-.disclaimer-note a:hover {
+.disclaimer-note a:hover,
+.header-note a:hover {
     text-decoration: underline;
 }
 
@@ -1098,7 +1105,8 @@ tbody tr.projection:hover {
         margin-bottom: 8px;
     }
 
-    .disclaimer-note {
+    .disclaimer-note,
+    .header-note {
         font-size: 0.78em;
         max-width: 100%;
         padding: 0 5px;
@@ -1341,7 +1349,8 @@ tbody tr.projection:hover {
         font-size: 1.3em;
     }
 
-    .disclaimer-note {
+    .disclaimer-note,
+    .header-note {
         font-size: 0.73em;
     }
 
