@@ -44,6 +44,47 @@ header {
     width: 100%;
 }
 
+/* Header - matches Yearly page format */
+.main-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 20px;
+    background: #fff;
+    border-radius: 8px;
+    margin-bottom: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+.main-header h1 {
+    font-size: 1.4em;
+    font-weight: 700;
+    color: #333;
+    margin: 0;
+}
+
+.stock-price {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.stock-price .price-label {
+    color: #00a5e5;
+    font-weight: 600;
+    font-size: 0.85em;
+}
+
+.stock-price .price-value {
+    color: #00a5e5;
+    font-weight: 700;
+    font-size: 1.2em;
+}
+
+.stock-price .price-change {
+    font-size: 0.9em;
+}
+
 header h1 {
     color: #00A5E5;
     font-size: 2.5em;
@@ -54,34 +95,36 @@ header h1 {
     line-height: 1.1;
 }
 
-.disclaimer-note,
+/* Header Note - matches Yearly page format */
 .header-note {
-    font-size: 0.833em;
-    color: #666666;
-    margin-top: 0;
-    margin-bottom: 0;
-    padding-top: 0;
-    padding-bottom: 0;
-    line-height: 1.4;
-    text-align: left;
-    word-wrap: break-word;
-    overflow-wrap: break-word;
+    background: #f8f9fa;
+    padding: 8px 12px;
+    border-radius: 6px;
+    margin-bottom: 10px;
+    border-left: 3px solid #00a5e5;
 }
 
 .header-note p {
+    font-size: 0.75em;
+    color: #555;
     margin: 0;
+    line-height: 1.4;
 }
 
-.disclaimer-note a,
 .header-note a {
     color: #00A5E5;
     text-decoration: none;
     font-weight: 500;
 }
 
-.disclaimer-note a:hover,
 .header-note a:hover {
     text-decoration: underline;
+}
+
+.section-title {
+    color: #333;
+    font-size: 1.3em;
+    margin-bottom: 12px;
 }
 
 .subtitle {
@@ -1105,11 +1148,20 @@ tbody tr.projection:hover {
         margin-bottom: 8px;
     }
 
-    .disclaimer-note,
+    .main-header {
+        flex-direction: column;
+        gap: 10px;
+        text-align: center;
+    }
+
+    .main-header h1 {
+        font-size: 1.2em;
+    }
+
     .header-note {
         font-size: 0.78em;
         max-width: 100%;
-        padding: 0 5px;
+        padding: 6px 10px;
     }
 
     .valuation-section {
@@ -1349,7 +1401,10 @@ tbody tr.projection:hover {
         font-size: 1.3em;
     }
 
-    .disclaimer-note,
+    .main-header h1 {
+        font-size: 1.1em;
+    }
+
     .header-note {
         font-size: 0.73em;
     }

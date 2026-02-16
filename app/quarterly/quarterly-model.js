@@ -696,40 +696,50 @@ async function updateCurrentStockPrice() {
     const priceElement = document.getElementById('currentStockPrice');
     const changeElement = document.getElementById('priceChange');
     
-    changeElement.textContent = '';
-    
-    if (BASE_DATA.currentPrice) {
+    if (changeElement) changeElement.textContent = '';
+    if (BASE_DATA.currentPrice && priceElement) {
         priceElement.textContent = `$${BASE_DATA.currentPrice.toFixed(2)}`;
     }
     
-    try {
-        const proxyUrl = 'https://api.allorigins.win/raw?url=';
-        const yahooUrl = encodeURIComponent('https://query1.finance.yahoo.com/v8/finance/chart/SOFI?interval=1d&range=1d');
-        const response = await fetch(proxyUrl + yahooUrl);
-        
-        if (response.ok) {
-            const data = await response.json();
-            if (data.chart && data.chart.result && data.chart.result[0]) {
-                const meta = data.chart.result[0].meta;
-                const price = meta.regularMarketPrice || meta.previousClose;
-                const previousClose = meta.previousClose;
-                
-                if (price) {
-                    priceElement.textContent = `$${price.toFixed(2)}`;
-                    BASE_DATA.currentPrice = price;
+    // Try multiple proxies/APIs for reliability (same as Yearly model)
+    const proxies = [
+        { url: 'https://api.allorigins.win/raw?url=' + encodeURIComponent('https://query1.finance.yahoo.com/v8/finance/chart/SOFI?interval=1d&range=1d'), type: 'yahoo' },
+        { url: 'https://corsproxy.io/?' + encodeURIComponent('https://query1.finance.yahoo.com/v8/finance/chart/SOFI?interval=1d&range=1d'), type: 'yahoo' },
+        { url: 'https://api.codetabs.com/v1/proxy?quest=' + encodeURIComponent('https://query1.finance.yahoo.com/v8/finance/chart/SOFI?interval=1d&range=1d'), type: 'yahoo' }
+    ];
+    
+    let fetched = false;
+    
+    for (const proxy of proxies) {
+        if (fetched) break;
+        try {
+            const response = await fetch(proxy.url, { signal: AbortSignal.timeout(5000) });
+            
+            if (response.ok) {
+                const data = await response.json();
+                if (data.chart?.result?.[0]) {
+                    const meta = data.chart.result[0].meta;
+                    const price = meta.regularMarketPrice || meta.previousClose;
+                    const previousClose = meta.previousClose;
                     
-                    if (previousClose && price !== previousClose) {
-                        const change = price - previousClose;
-                        const changePercent = ((change / previousClose) * 100).toFixed(2);
-                        const changeColor = change >= 0 ? '#00aa00' : '#aa0000';
-                        const changeSymbol = change >= 0 ? '+' : '';
-                        changeElement.innerHTML = `<span style="color: ${changeColor}">${changeSymbol}${change.toFixed(2)} (${changeSymbol}${changePercent}%)</span>`;
+                    if (price && priceElement) {
+                        priceElement.textContent = `$${price.toFixed(2)}`;
+                        BASE_DATA.currentPrice = price;
+                        fetched = true;
+                        
+                        if (previousClose && price !== previousClose && changeElement) {
+                            const change = price - previousClose;
+                            const changePercent = ((change / previousClose) * 100).toFixed(2);
+                            const color = change >= 0 ? '#4caf50' : '#e53935';
+                            const symbol = change >= 0 ? '+' : '';
+                            changeElement.innerHTML = `<span style="color: ${color}">${symbol}${change.toFixed(2)} (${symbol}${changePercent}%)</span>`;
+                        }
                     }
                 }
             }
+        } catch (error) {
+            console.log(`Proxy failed: ${proxy.url.substring(0, 40)}..., trying next`);
         }
-    } catch (error) {
-        console.error('Error fetching stock price:', error);
     }
     
     setTimeout(updateCurrentStockPrice, 60000);
