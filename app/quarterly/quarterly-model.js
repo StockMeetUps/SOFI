@@ -478,6 +478,9 @@ function updateModel() {
     document.getElementById('q1_2026Revenue').textContent = '$' + Q1_2026_CURRENT.netRevenue.toLocaleString() + 'M';
     document.getElementById('q1_2026NetIncome').textContent = '$' + Q1_2026_CURRENT.netIncome.toLocaleString() + 'M';
     document.getElementById('q1_2026EPS').textContent = Q1_2026_CURRENT.eps + '¢';
+    const yoyGrowth = ((Q1_2026_CURRENT.netRevenue - Q1_2025_REF.netRevenue) / Q1_2025_REF.netRevenue * 100).toFixed(1);
+    document.getElementById('q1_2026YoYGrowth').textContent = '+' + yoyGrowth + '%';
+    document.getElementById('q1_2026EBITDA').textContent = '$' + Q1_2026_CURRENT.ebitda.toLocaleString() + 'M';
     
     // Update charts
     updateAllCharts(data);
