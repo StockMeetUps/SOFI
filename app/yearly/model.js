@@ -180,10 +180,19 @@ const MODEL_ASSUMPTIONS = {
     sharesOutstanding2030: 1.251767
 };
 
+// Year-end stock prices for historical P/E calculation
+const YEAR_END_PRICES = {
+    2021: 15.44,
+    2022: 4.58,
+    2023: 9.95,
+    2024: 15.78,
+    2025: null // uses live current price
+};
+
 // Chart instances
 let revenueChart, profitabilityChart, memberChart, scenarioChart, epsChart;
 let salesMarketingChart, salesMarketingPercentChart, memberAcquisitionChart, marketCapChart;
-let memberGrowthChart, peRatioChart, revenueGrowthChart, netIncomeMarginChart;
+let memberGrowthChart, peRatioChart, revenueGrowthChart, netIncomeMarginChart, historicalPEChart;
 
 // Initialize model
 document.addEventListener('DOMContentLoaded', function() {
@@ -290,17 +299,6 @@ function updateAllChartsWithData(projections) {
         memberGrowthChart.update();
     }
     
-    if (peRatioChart) {
-        peRatioChart.data.labels = years;
-        peRatioChart.data.datasets[0].data = projections.map(p => {
-            if (p.year >= 2025 && p.year <= 2030) {
-                return MODEL_ASSUMPTIONS['peRatio' + p.year] || null;
-            }
-            return null;
-        });
-        peRatioChart.update();
-    }
-    
     if (revenueGrowthChart) {
         const filtered = projections.filter(p => p.year >= 2026);
         revenueGrowthChart.data.labels = filtered.map(p => p.year.toString());
@@ -317,6 +315,28 @@ function updateAllChartsWithData(projections) {
             return null;
         });
         netIncomeMarginChart.update();
+    }
+    
+    if (historicalPEChart) {
+        const histFiltered = projections.filter(p => p.year >= 2021 && p.year <= 2025);
+        historicalPEChart.data.labels = histFiltered.map(p => p.year.toString());
+        historicalPEChart.data.datasets[0].data = histFiltered.map(p => {
+            if (!p.eps || p.eps <= 0) return null;
+            const price = p.year === 2025 ? BASE_DATA.currentPrice : (YEAR_END_PRICES[p.year] || null);
+            return price ? parseFloat((price / p.eps).toFixed(1)) : null;
+        });
+        historicalPEChart.update();
+    }
+    
+    if (peRatioChart) {
+        const peFiltered = projections.filter(p => p.year >= 2026 && p.eps && p.eps > 0);
+        const peYears = peFiltered.map(p => p.year.toString());
+        const impliedPE = peFiltered.map(p => {
+            return parseFloat((BASE_DATA.currentPrice / p.eps).toFixed(1));
+        });
+        peRatioChart.data.labels = peYears;
+        peRatioChart.data.datasets[0].data = impliedPE;
+        peRatioChart.update();
     }
     
     updateProjectionsTable(projections);
@@ -621,17 +641,24 @@ function updateProjectionsTable(projections) {
         { name: 'Net Income', key: 'netIncome', format: v => v ? `$${(v / 1000000).toFixed(2)}B` : 'N/A' },
         { name: 'Net Income %', key: 'netIncomeMargin', format: v => v ? `${v.toFixed(1)}%` : 'N/A' },
         { name: 'EPS', key: 'eps', format: v => v ? `$${v.toFixed(2)}` : 'N/A' },
-        { name: 'FWD P/E Ratio', key: 'peRatio', format: v => v ? `${v}x` : 'N/A' }
+        { name: 'FWD P/E (Target)', key: 'peRatio', format: v => v ? `${v}x` : 'N/A' },
+        { name: 'FWD P/E (Implied)', key: 'impliedPE', format: v => v ? `${v.toFixed(1)}x` : 'N/A' },
+        { name: 'P/E (Historical)', key: 'historicalPE', format: v => v ? `${v.toFixed(1)}x` : 'N/A' }
     ];
     
-    // Calculate net income margin and P/E ratio for each projection
     projections.forEach(proj => {
         proj.netIncomeMargin = proj.netIncome && proj.revenue ? (proj.netIncome / proj.revenue) * 100 : null;
-        // P/E ratios: historical years and 2025 N/A, 2026+ use model assumptions
-        if (proj.year >= 2026 && proj.year <= 2030) {
+        if (proj.year >= 2025 && proj.year <= 2030) {
             proj.peRatio = MODEL_ASSUMPTIONS[`peRatio${proj.year}`] || null;
         } else {
-            proj.peRatio = null; // Historical years and 2025 - no P/E shown
+            proj.peRatio = null;
+        }
+        proj.impliedPE = (proj.eps && proj.eps > 0) ? BASE_DATA.currentPrice / proj.eps : null;
+        if (proj.year <= 2025 && proj.eps && proj.eps > 0) {
+            const price = proj.year === 2025 ? BASE_DATA.currentPrice : (YEAR_END_PRICES[proj.year] || null);
+            proj.historicalPE = price ? price / proj.eps : null;
+        } else {
+            proj.historicalPE = null;
         }
     });
     
@@ -865,7 +892,8 @@ async function updateCurrentStockPrice() {
                         priceElement.textContent = `$${price.toFixed(2)}`;
                         BASE_DATA.currentPrice = price;
                         fetched = true;
-                        updateUpsidePercentage(); // Recalculate upside with live price
+                        updateUpsidePercentage();
+                        updateAllChartsWithData(calculateProjections());
                         
                         if (previousClose && price !== previousClose && changeElement) {
                             const change = price - previousClose;
@@ -1032,16 +1060,6 @@ function initializeCharts() {
         });
     }
     
-    // P/E Ratio Chart
-    const peRatioCtx = document.getElementById('peRatioChart');
-    if (peRatioCtx) {
-        peRatioChart = new Chart(peRatioCtx.getContext('2d'), {
-            type: 'bar',
-            data: { labels: [], datasets: [{ label: 'FWD P/E Ratio', data: [], backgroundColor: COLORS.purple, borderRadius: 4 }] },
-            options: { ...commonOptions, scales: { ...commonOptions.scales, y: { ...commonOptions.scales.y, max: 60 } }, plugins: { ...commonOptions.plugins, datalabels: { ...commonOptions.plugins.datalabels, formatter: v => v ? v + 'x' : '' } } }
-        });
-    }
-    
     // EPS Chart
     const epsCtx = document.getElementById('epsChart');
     if (epsCtx) {
@@ -1049,6 +1067,42 @@ function initializeCharts() {
             type: 'line',
             data: { labels: [], datasets: [{ label: 'EPS ($)', data: [], borderColor: COLORS.cyan, backgroundColor: 'rgba(0,165,229,0.1)', fill: true, tension: 0.4 }] },
             options: { ...commonOptions, plugins: { ...commonOptions.plugins, datalabels: { ...commonOptions.plugins.datalabels, formatter: v => v ? '$' + v.toFixed(2) : '' } } }
+        });
+    }
+    
+    // Historical P/E Chart (year-end price / EPS, 2021-2025)
+    const histPECtx = document.getElementById('historicalPEChart');
+    if (histPECtx) {
+        historicalPEChart = new Chart(histPECtx.getContext('2d'), {
+            type: 'bar',
+            data: { labels: [], datasets: [{ label: 'P/E (Year-End Price / EPS)', data: [], backgroundColor: COLORS.green, borderRadius: 4 }] },
+            options: {
+                ...commonOptions,
+                scales: { ...commonOptions.scales, y: { ...commonOptions.scales.y, max: 120 } },
+                plugins: { ...commonOptions.plugins, datalabels: { ...commonOptions.plugins.datalabels, formatter: v => v ? v + 'x' : 'N/A' } }
+            }
+        });
+    }
+    
+    // FWD P/E Ratio Chart (Implied at Current Price)
+    const peRatioCtx = document.getElementById('peRatioChart');
+    if (peRatioCtx) {
+        peRatioChart = new Chart(peRatioCtx.getContext('2d'), {
+            type: 'bar',
+            data: {
+                labels: [],
+                datasets: [
+                    { label: 'Implied FWD P/E (Current Price)', data: [], backgroundColor: COLORS.cyan, borderRadius: 4 }
+                ]
+            },
+            options: {
+                ...commonOptions,
+                scales: { ...commonOptions.scales, y: { ...commonOptions.scales.y, max: 40 } },
+                plugins: {
+                    ...commonOptions.plugins,
+                    datalabels: { ...commonOptions.plugins.datalabels, formatter: v => v ? v + 'x' : '' }
+                }
+            }
         });
     }
 }
