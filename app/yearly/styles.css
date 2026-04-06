@@ -237,6 +237,43 @@ body {
     background: #555;
 }
 
+/* Project-until year (trend horizon) */
+.project-until-block {
+    margin-bottom: 8px;
+}
+
+.project-until-hint {
+    margin: 0 0 6px 0;
+    font-size: 0.68em;
+    color: #666;
+    line-height: 1.35;
+}
+
+.project-until-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.project-until-row .slider-value {
+    min-width: 36px;
+}
+
+.project-until-slider {
+    flex: 1;
+    height: 6px;
+    border-radius: 3px;
+    accent-color: #00a5e5;
+}
+
+.project-until-ticks {
+    font-size: 0.65em;
+    color: #888;
+    text-align: center;
+    margin-top: 4px;
+    letter-spacing: 0.02em;
+}
+
 /* Slider Controls */
 .filters-vertical-list {
     display: flex;

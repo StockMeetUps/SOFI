@@ -13,9 +13,10 @@ function updateSliderFill(slider) {
 
 // Initialize all slider fills on page load
 function initializeAllSliderFills() {
-    const sliders = document.querySelectorAll('.filters-vertical-list input[type="range"]');
+    const sliders = document.querySelectorAll('.filters-vertical-list input[type="range"], #projectUntilYear');
     sliders.forEach(slider => {
         updateSliderFill(slider);
+        if (slider.id === 'projectUntilYear') return;
         slider.addEventListener('input', function() {
             updateSliderFill(this);
         });
@@ -194,11 +195,19 @@ let revenueChart, profitabilityChart, memberChart, scenarioChart, epsChart;
 let salesMarketingChart, salesMarketingPercentChart, memberAcquisitionChart, marketCapChart;
 let memberGrowthChart, peRatioChart, revenueGrowthChart, netIncomeMarginChart, pegRatioChart;
 
+/** Last projection year shown in charts, KPIs, and table (2026–2030). */
+let PROJECT_UNTIL_YEAR = 2030;
+
+function getViewProjections(projections) {
+    return projections.filter(p => p.year <= PROJECT_UNTIL_YEAR);
+}
+
 // Initialize model
 document.addEventListener('DOMContentLoaded', function() {
     try {
         initializeCharts();
         initializeSliders();
+        initializeProjectUntilControl();
         
         // Sync PROJECTION_DATA with default slider values immediately
         updateModelWithSliders();
@@ -218,11 +227,30 @@ document.addEventListener('DOMContentLoaded', function() {
 function updateAllChartsWithData(projections) {
     if (!projections || projections.length === 0) return;
     
-    const years = projections.map(p => p.year.toString());
-    const finalYear = projections[projections.length - 1];
+    const view = getViewProjections(projections);
+    if (!view || view.length === 0) return;
     
-    // Update KPI cards
-    const valuation = calculatePEValuation(projections);
+    const years = view.map(p => p.year.toString());
+    const finalYear = view[view.length - 1];
+    const terminalY = String(finalYear.year);
+    
+    const setYearLabels = () => {
+        const ids = ['kpiTerminalYear', 'kpiTerminalYearMc', 'kpiTerminalYearRev', 'kpiTerminalYearNi', 'kpiTerminalYearEps', 'kpiTerminalYearMem', 'kpiUpsideYear'];
+        ids.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.textContent = terminalY;
+        });
+        const titleEnd = document.getElementById('projectionsTitleEndYear');
+        if (titleEnd) titleEnd.textContent = terminalY;
+        const pegH = document.getElementById('pegChartHeading');
+        if (pegH && PROJECT_UNTIL_YEAR >= 2026) {
+            pegH.textContent = `SOFI : FWD PEG Ratio (2026–${PROJECT_UNTIL_YEAR})`;
+        }
+    };
+    setYearLabels();
+    
+    // Update KPI cards (terminal year matches PROJECT_UNTIL_YEAR)
+    const valuation = calculatePEValuation(view);
     document.getElementById('projectedPrice').textContent = `$${valuation.price.toFixed(2)}`;
     
     // Calculate and display upside percentage
@@ -234,15 +262,15 @@ function updateAllChartsWithData(projections) {
     document.getElementById('eps2030').textContent = `$${finalYear.eps.toFixed(2)}`;
     document.getElementById('members2030').textContent = `${(finalYear.clientCount / 1000000).toFixed(1)}M`;
     
-    // Update charts
+    // Update charts (horizon = view, through PROJECT_UNTIL_YEAR)
     if (revenueChart) {
         revenueChart.data.labels = years;
-        revenueChart.data.datasets[0].data = projections.map(p => p.revenue / 1000000);
+        revenueChart.data.datasets[0].data = view.map(p => p.revenue / 1000000);
         revenueChart.update();
     }
     
     if (scenarioChart) {
-        const trends = calculateScenarioTrends(projections);
+        const trends = calculateScenarioTrends(view);
         const filtered = trends.years.map((y, i) => y >= 2025 ? i : -1).filter(i => i !== -1);
         scenarioChart.data.labels = filtered.map(i => trends.years[i].toString());
         scenarioChart.data.datasets[0].data = filtered.map(i => trends.prices[i]);
@@ -250,7 +278,7 @@ function updateAllChartsWithData(projections) {
     }
     
     if (marketCapChart) {
-        const trends = calculateMarketCapTrends(projections);
+        const trends = calculateMarketCapTrends(view);
         const filtered = trends.years.map((y, i) => y >= 2025 ? i : -1).filter(i => i !== -1);
         marketCapChart.data.labels = filtered.map(i => trends.years[i].toString());
         marketCapChart.data.datasets[0].data = filtered.map(i => trends.marketCaps[i]);
@@ -259,48 +287,48 @@ function updateAllChartsWithData(projections) {
     
     if (memberChart) {
         memberChart.data.labels = years;
-        memberChart.data.datasets[0].data = projections.map(p => p.clientCount / 1000000);
+        memberChart.data.datasets[0].data = view.map(p => p.clientCount / 1000000);
         memberChart.update();
     }
     
     if (profitabilityChart) {
         profitabilityChart.data.labels = years;
-        profitabilityChart.data.datasets[0].data = projections.map(p => p.netIncome ? p.netIncome / 1000000 : null);
+        profitabilityChart.data.datasets[0].data = view.map(p => p.netIncome ? p.netIncome / 1000000 : null);
         profitabilityChart.update();
     }
     
     if (epsChart) {
         epsChart.data.labels = years;
-        epsChart.data.datasets[0].data = projections.map(p => p.eps);
+        epsChart.data.datasets[0].data = view.map(p => p.eps);
         epsChart.update();
     }
     
     if (salesMarketingChart) {
         salesMarketingChart.data.labels = years;
-        salesMarketingChart.data.datasets[0].data = projections.map(p => (p.salesMarketing || 0) / 1000000);
+        salesMarketingChart.data.datasets[0].data = view.map(p => (p.salesMarketing || 0) / 1000000);
         salesMarketingChart.update();
     }
     
     if (salesMarketingPercentChart) {
         salesMarketingPercentChart.data.labels = years;
-        salesMarketingPercentChart.data.datasets[0].data = projections.map(p => p.salesMarketingPercent || 0);
+        salesMarketingPercentChart.data.datasets[0].data = view.map(p => p.salesMarketingPercent || 0);
         salesMarketingPercentChart.update();
     }
     
     if (memberAcquisitionChart) {
         memberAcquisitionChart.data.labels = years;
-        memberAcquisitionChart.data.datasets[0].data = projections.map(p => p.costPerMember);
+        memberAcquisitionChart.data.datasets[0].data = view.map(p => p.costPerMember);
         memberAcquisitionChart.update();
     }
     
     if (memberGrowthChart) {
         memberGrowthChart.data.labels = years;
-        memberGrowthChart.data.datasets[0].data = projections.map(p => p.memberGrowthRate);
+        memberGrowthChart.data.datasets[0].data = view.map(p => p.memberGrowthRate);
         memberGrowthChart.update();
     }
     
     if (revenueGrowthChart) {
-        const filtered = projections.filter(p => p.year >= 2026);
+        const filtered = view.filter(p => p.year >= 2026);
         revenueGrowthChart.data.labels = filtered.map(p => p.year.toString());
         revenueGrowthChart.data.datasets[0].data = filtered.map(p => p.revenueGrowth);
         revenueGrowthChart.update();
@@ -308,7 +336,7 @@ function updateAllChartsWithData(projections) {
     
     if (netIncomeMarginChart) {
         netIncomeMarginChart.data.labels = years;
-        netIncomeMarginChart.data.datasets[0].data = projections.map(p => {
+        netIncomeMarginChart.data.datasets[0].data = view.map(p => {
             if (p.netIncome && p.netIncome > 0 && p.revenue > 0) {
                 return (p.netIncome / p.revenue) * 100;
             }
@@ -318,8 +346,10 @@ function updateAllChartsWithData(projections) {
     }
     
     if (pegRatioChart) {
-        const pegLabels = ['2026', '2027', '2028', '2029', '2030'];
-        const pegData = calculatePEGSeries(projections);
+        const pegDataFull = calculatePEGSeries(projections);
+        const n = Math.max(0, PROJECT_UNTIL_YEAR - 2026 + 1);
+        const pegData = pegDataFull.slice(0, n);
+        const pegLabels = pegData.map((_, i) => String(2026 + i));
         pegRatioChart.data.labels = pegLabels;
         pegRatioChart.data.datasets[0].data = pegData;
         const valid = pegData.filter(v => v != null && !isNaN(v));
@@ -329,7 +359,7 @@ function updateAllChartsWithData(projections) {
     }
     
     if (peRatioChart) {
-        const peFiltered = projections.filter(p => p.year >= 2026 && p.eps && p.eps > 0);
+        const peFiltered = view.filter(p => p.year >= 2026 && p.eps && p.eps > 0);
         const peYears = peFiltered.map(p => p.year.toString());
         const impliedPE = peFiltered.map(p => {
             if (BASE_DATA.currentPrice == null) return null;
@@ -340,9 +370,24 @@ function updateAllChartsWithData(projections) {
         peRatioChart.update();
     }
     
-    updateProjectionsTable(projections);
+    updateProjectionsTable(view);
     updateSegmentRevenueTable();
     updateAssumptions();
+}
+
+function initializeProjectUntilControl() {
+    const el = document.getElementById('projectUntilYear');
+    const valEl = document.getElementById('projectUntilYearValue');
+    if (!el || !valEl) return;
+    PROJECT_UNTIL_YEAR = parseInt(el.value, 10);
+    valEl.textContent = String(PROJECT_UNTIL_YEAR);
+    updateSliderFill(el);
+    el.addEventListener('input', function() {
+        PROJECT_UNTIL_YEAR = parseInt(this.value, 10);
+        valEl.textContent = String(PROJECT_UNTIL_YEAR);
+        updateSliderFill(this);
+        updateAllChartsWithData(calculateProjections());
+    });
 }
 
 // Initialize sliders
@@ -448,6 +493,14 @@ function resetControls() {
             if (valEl) valEl.textContent = slider.format(value);
         });
     }
+    const projectUntilEl = document.getElementById('projectUntilYear');
+    const projectUntilVal = document.getElementById('projectUntilYearValue');
+    if (projectUntilEl) {
+        projectUntilEl.value = 2030;
+        PROJECT_UNTIL_YEAR = 2030;
+        updateSliderFill(projectUntilEl);
+    }
+    if (projectUntilVal) projectUntilVal.textContent = '2030';
     updateModelWithSliders();
 }
 
@@ -569,18 +622,20 @@ function calculateProjections() {
     return projections;
 }
 
-// Calculate P/E valuation
+// Calculate P/E valuation (uses terminal year in `projections` and matching P/E / share count)
 function calculatePEValuation(projections) {
     const finalYear = projections[projections.length - 1];
-    if (!finalYear.netIncome || finalYear.netIncome <= 0) {
+    if (!finalYear || !finalYear.netIncome || finalYear.netIncome <= 0) {
         return { price: 0, marketCap: 0 };
     }
     
+    const y = finalYear.year;
     const netIncomeBillions = finalYear.netIncome / 1000000;
-    const eps = netIncomeBillions / MODEL_ASSUMPTIONS.sharesOutstanding2030;
-    const peRatio = MODEL_ASSUMPTIONS.peRatio2030;
+    const sharesOutstanding = y === 2030 ? MODEL_ASSUMPTIONS.sharesOutstanding2030 : BASE_DATA.sharesOutstanding;
+    const peRatio = MODEL_ASSUMPTIONS[`peRatio${y}`] || MODEL_ASSUMPTIONS.peRatio2030;
+    const eps = netIncomeBillions / sharesOutstanding;
     const price = eps * peRatio;
-    const marketCap = price * MODEL_ASSUMPTIONS.sharesOutstanding2030;
+    const marketCap = price * sharesOutstanding;
     
     return { price, marketCap };
 }
@@ -650,6 +705,15 @@ function calculateScenarioTrends(projections) {
 
 // Update projections table (transposed: metrics as rows, years as columns)
 function updateProjectionsTable(projections) {
+    const theadRow = document.getElementById('projectionsHeadRow');
+    if (theadRow) {
+        theadRow.innerHTML = '<th class="metric-header">Metric</th>' +
+            projections.map(p => {
+                const cls = p.period === 'historical' ? 'past-performance' : 'projection';
+                return `<th class="${cls}">${p.year}</th>`;
+            }).join('');
+    }
+    
     const tbody = document.getElementById('projectionsBody');
     if (!tbody) return;
     tbody.innerHTML = '';
@@ -716,7 +780,7 @@ function updateSegmentRevenueTable() {
     if (!tbody) return;
     tbody.innerHTML = '';
     
-    const years = [2024, 2025, 2026, 2027, 2028, 2029, 2030];
+    const years = [2024, 2025, 2026, 2027, 2028, 2029, 2030].filter(y => y <= PROJECT_UNTIL_YEAR);
     
     // Get actual total revenue from projections (in millions)
     const projections = calculateProjections();

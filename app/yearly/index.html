@@ -110,32 +110,32 @@
                 <!-- KPI Cards Row -->
                 <section class="kpi-section">
                     <div class="kpi-card">
-                        <div class="kpi-label">Projected Share Price (2030)</div>
+                        <div class="kpi-label">Projected Share Price (<span id="kpiTerminalYear">2030</span>)</div>
                         <div class="kpi-value cyan" id="projectedPrice">$0.00</div>
-                        <div class="kpi-upside">2030 UPSIDE: <span id="priceUpside" class="upside-value">+0%</span></div>
+                        <div class="kpi-upside"><span id="kpiUpsideYear">2030</span> UPSIDE: <span id="priceUpside" class="upside-value">+0%</span></div>
                     </div>
                     <div class="kpi-card">
-                        <div class="kpi-label">Market Cap (2030)</div>
+                        <div class="kpi-label">Market Cap (<span id="kpiTerminalYearMc">2030</span>)</div>
                         <div class="kpi-value cyan" id="marketCap">$0.00</div>
                         <div class="kpi-unit">Billions</div>
                     </div>
                     <div class="kpi-card">
-                        <div class="kpi-label">Revenue (2030)</div>
+                        <div class="kpi-label">Revenue (<span id="kpiTerminalYearRev">2030</span>)</div>
                         <div class="kpi-value cyan" id="revenue2030">$0.00</div>
                         <div class="kpi-unit">Billions</div>
                     </div>
                     <div class="kpi-card">
-                        <div class="kpi-label">Net Income (2030)</div>
+                        <div class="kpi-label">Net Income (<span id="kpiTerminalYearNi">2030</span>)</div>
                         <div class="kpi-value cyan" id="netIncome2030">$0.00</div>
                         <div class="kpi-unit">Billions</div>
                     </div>
                     <div class="kpi-card">
-                        <div class="kpi-label">EPS (2030)</div>
+                        <div class="kpi-label">EPS (<span id="kpiTerminalYearEps">2030</span>)</div>
                         <div class="kpi-value cyan" id="eps2030">$0.00</div>
                         <div class="kpi-unit">Earnings Per Share</div>
                     </div>
                     <div class="kpi-card">
-                        <div class="kpi-label">Total Members (2030)</div>
+                        <div class="kpi-label">Total Members (<span id="kpiTerminalYearMem">2030</span>)</div>
                         <div class="kpi-value cyan" id="members2030">0M</div>
                         <div class="kpi-unit">Millions</div>
                     </div>
@@ -182,7 +182,7 @@
                 <!-- Row 4: FWD PEG Ratio and Implied FWD P/E -->
                 <div class="chart-row">
                     <div class="chart-card">
-                        <h3>SOFI : FWD PEG Ratio (2026-2030)</h3>
+                        <h3 id="pegChartHeading">SOFI : FWD PEG Ratio (2026–2030)</h3>
                         <canvas id="pegRatioChart"></canvas>
                     </div>
                     <div class="chart-card">
@@ -236,6 +236,15 @@
                     <h3>Interactive Sliders</h3>
                     <button class="reset-btn" onclick="resetControls()">Reset</button>
                 </div>
+                <div class="project-until-block filter-container">
+                    <div class="filter-label-header">Project trends until</div>
+                    <p class="project-until-hint">Charts and KPIs use data through this year (2026–2030).</p>
+                    <div class="project-until-row">
+                        <span class="slider-value" id="projectUntilYearValue">2030</span>
+                        <input type="range" id="projectUntilYear" class="project-until-slider" min="2026" max="2030" step="1" value="2030" aria-label="Project trends until year">
+                    </div>
+                    <div class="project-until-ticks" aria-hidden="true">2026 · 2027 · 2028 · 2029 · 2030</div>
+                </div>
                 <div id="yearControlsContainer"></div>
             </div>
         </div>
@@ -243,24 +252,11 @@
 
         <!-- Financial Projections Table - MOVED TO BOTTOM -->
         <section class="projections-section">
-            <h2>Financial Actuals & Projections (2020-2030)</h2>
+            <h2>Financial Actuals & Projections (2020–<span id="projectionsTitleEndYear">2030</span>)</h2>
             <div class="table-container">
                 <table id="projectionsTable">
                     <thead>
-                        <tr>
-                            <th class="metric-header">Metric</th>
-                            <th class="past-performance">2020</th>
-                            <th class="past-performance">2021</th>
-                            <th class="past-performance">2022</th>
-                            <th class="past-performance">2023</th>
-                            <th class="past-performance">2024</th>
-                            <th class="past-performance">2025</th>
-                            <th class="projection">2026</th>
-                            <th class="projection">2027</th>
-                            <th class="projection">2028</th>
-                            <th class="projection">2029</th>
-                            <th class="projection">2030</th>
-                        </tr>
+                        <tr id="projectionsHeadRow"></tr>
                     </thead>
                     <tbody id="projectionsBody">
                     </tbody>
@@ -282,6 +278,6 @@
 
     </div>
 
-    <script src="model.js?v=20260407"></script>
+    <script src="model.js?v=20260408"></script>
 </body>
 </html>
