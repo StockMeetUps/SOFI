@@ -7,68 +7,80 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <title>SOFI : FY25 Actuals & Q1 2026 Quarterly Simulation Model</title>
-    <link rel="stylesheet" href="styles.css?v=20260216">
-    <link rel="stylesheet" href="quarterly-styles.css?v=20260216">
+    <link rel="stylesheet" href="../yearly/styles.css?v=20260420">
+    <link rel="stylesheet" href="styles.css?v=20260406">
+    <link rel="stylesheet" href="quarterly-styles.css?v=20260406">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js" onerror="console.log('Datalabels plugin failed to load')"></script>
     <style>
-        /* Remove extra top margin for iframe embedding */
-        body { margin: 0; padding: 0 20px 20px 20px; }
+        /* Match yearly: iframe-friendly; page background from yearly/styles.css */
+        body { margin: 0; padding: 0; }
+        .container { padding-top: 10px; }
     </style>
 </head>
 <body>
     <div class="container">
         <header class="main-header">
-            <h1>SOFI : FY25 Actuals & Q1 2026 Quarterly Simulation Model</h1>
-            <div class="stock-price">
-                <span class="price-label">Current SOFI Stock Price:</span>
-                <span class="price-value" id="currentStockPrice">Loading...</span>
-                <span class="price-change" id="priceChange"></span>
+            <div class="main-header-top">
+                <h1>SOFI : FY25 Actuals & Q1 2026 Quarterly Simulation Model</h1>
+                <div class="stock-price">
+                    <span class="price-label">Current SOFI Stock Price:</span>
+                    <span class="price-value" id="currentStockPrice">Loading...</span>
+                    <span class="price-change" id="priceChange"></span>
+                </div>
+            </div>
+            <p class="header-data-line">Actuals through Q4 FY25 · Q4 earnings released Jan 30, 2026</p>
+            <div class="header-intro">
+                <p class="header-intro-lead"><strong>Note:</strong> This interactive SOFI projection model is for educational purposes only; it is not investment advice. Assumptions are based on SOFI community discussions, public interviews, and shared analysis. CEO Anthony Noto has cited mid-30%+ revenue growth momentum. Catalysts: Loan platform deals, crypto services, Galileo SAAS, lending expansion, Invest, international transfers.</p>
             </div>
         </header>
 
-        <div class="header-note">
-            <p><strong>Note:</strong> This interactive SOFI projection model is for educational purposes only and not investment advice. Assumptions are based on SOFI community discussions, public interviews, and shared analysis. CEO Anthony Noto cited mid-30%+ revenue growth momentum; <strong>Catalysts:</strong> Loan platform deals, crypto services, Galileo SAAS, lending expansion, Invest, international transfers.</p>
-        </div>
-
-        <section class="valuation-section">
-            <h2 class="section-title">SOFI : Q1 2026 Outlook</h2>
-            <div class="valuation-grid">
-                <div class="valuation-card">
-                    <h3>Q1 2026 Members (Est)</h3>
-                    <div class="metric-value" id="q1_2026Members">0M</div>
-                    <div class="metric-label">Millions</div>
-                </div>
-                <div class="valuation-card">
-                    <h3>QoQ Revenue Growth</h3>
-                    <div class="metric-value" id="q1_2026QoQGrowth" style="color: #4caf50 !important;">0%</div>
-                    <div class="metric-label">vs Q4 FY25</div>
-                </div>
-                <div class="valuation-card">
-                    <h3>Q1 2026 Revenue (Est)</h3>
-                    <div class="metric-value" id="q1_2026Revenue">$0</div>
-                    <div class="metric-label">Millions</div>
-                </div>
-                <div class="valuation-card">
-                    <h3>Q1 2026 EBITDA (Est)</h3>
-                    <div class="metric-value" id="q1_2026EBITDA">$0</div>
-                    <div class="metric-label">Millions</div>
-                </div>
-                <div class="valuation-card">
-                    <h3>Q1 2026 Net Income (Est)</h3>
-                    <div class="metric-value" id="q1_2026NetIncome">$0</div>
-                    <div class="metric-label">Millions</div>
-                </div>
-                <div class="valuation-card">
-                    <h3>Q1 2026 EPS (Est)</h3>
-                    <div class="metric-value" id="q1_2026EPS">0¢</div>
-                    <div class="metric-label">Cents</div>
-                </div>
+        <h2 class="section-heading-yearly">SOFI : Q1 2026 Outlook</h2>
+        <section class="kpi-section kpi-section-quarterly">
+            <div class="kpi-card">
+                <div class="kpi-label">Q1 2026 Members (Est)</div>
+                <div class="kpi-value cyan" id="q1_2026Members">0M</div>
+                <div class="kpi-unit">Millions</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-label">QoQ Revenue Growth</div>
+                <div class="kpi-value" id="q1_2026QoQGrowth">0%</div>
+                <div class="kpi-unit">vs Q4 FY25</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-label">YoY Revenue</div>
+                <div class="kpi-value" id="q1_2026YoYRevenue">0%</div>
+                <div class="kpi-unit">vs Q1 FY25</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-label">YoY Net Income</div>
+                <div class="kpi-value" id="q1_2026YoYNI">0%</div>
+                <div class="kpi-unit">vs Q1 FY25</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-label">Q1 2026 Revenue (Est)</div>
+                <div class="kpi-value cyan" id="q1_2026Revenue">$0</div>
+                <div class="kpi-unit">Millions</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-label">Q1 2026 EBITDA (Est)</div>
+                <div class="kpi-value cyan" id="q1_2026EBITDA">$0</div>
+                <div class="kpi-unit">Millions</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-label">Q1 2026 Net Income (Est)</div>
+                <div class="kpi-value cyan" id="q1_2026NetIncome">$0</div>
+                <div class="kpi-unit">Millions</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-label">Q1 2026 EPS (Est)</div>
+                <div class="kpi-value cyan" id="q1_2026EPS">0¢</div>
+                <div class="kpi-unit">Cents</div>
             </div>
         </section>
 
-        <div class="charts-and-controls-container">
-            <div class="charts-column">
+        <div class="page-layout">
+            <div class="content-column charts-column">
                 <section class="trend-charts-section">
                     <div class="trend-charts-grid">
                         <div class="chart-container">
@@ -137,22 +149,22 @@
                 </section>
             </div>
 
-            <section class="model-controls">
-                <h2 class="model-controls-title">
-                    Q1 2026 Sliders
-                    <button class="btn-primary btn-small" onclick="resetControls()">Reset</button>
-                </h2>
+            <div class="sliders-panel model-controls">
+                <div class="sliders-header">
+                    <h3>Q1 2026 Sliders</h3>
+                    <button type="button" class="reset-btn" onclick="resetControls()">Reset</button>
+                </div>
                 <div id="quarterlyControlsContainer"></div>
-            </section>
+            </div>
         </div>
 
         <section class="assumptions-section">
-            <h2>Quarterly Data Summary</h2>
+            <h2 class="section-heading-yearly">Quarterly Data Summary</h2>
             <div id="assumptionsContent"></div>
         </section>
 
-        <section class="financial-projections">
-            <h2>FY25 Quarterly Actuals & Q1 2026 Projection</h2>
+        <section class="financial-projections projections-section">
+            <h2 class="section-heading-yearly">FY25 Quarterly Actuals & Q1 2026 Projection</h2>
             <div class="table-container">
                 <table id="quarterlyTable">
                     <thead>
@@ -183,6 +195,6 @@
         </section>
     </div>
 
-    <script src="quarterly-model.js?v=20260216"></script>
+    <script src="quarterly-model.js?v=20260406"></script>
 </body>
 </html>

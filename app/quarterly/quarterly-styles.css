@@ -1,4 +1,15 @@
 /* Quarterly Model Specific Styles */
+/* Shared chrome (header, KPIs, sliders, sections): ../yearly/styles.css */
+
+.section-heading-yearly {
+    font-size: 1.2em;
+    font-weight: 800;
+    margin: 0 0 12px 0;
+    padding-bottom: 10px;
+    border-bottom: 2px solid #00a5e5;
+    color: #111827;
+    letter-spacing: -0.02em;
+}
 
 /* Quarterly filter containers - Compact */
 .quarterly-filter {
@@ -163,11 +174,9 @@
     background-color: #f5f5f5;
 }
 
-/* Wider controls for quarterly model */
-.model-controls {
-    width: 18%;
-    max-width: 220px;
-    min-width: 180px;
+/* Slider column width: ../yearly/styles.css .sliders-panel — only relax min-width on wide screens */
+.sliders-panel.model-controls {
+    min-width: 0;
 }
 
 /* Chart bar colors for actual vs projection */
@@ -179,16 +188,16 @@
     background-color: rgba(33, 150, 243, 0.7);
 }
 
-/* Summary cards enhancement */
-.valuation-card .metric-value {
-    font-size: 1.5em;
+/* Outlook KPI values slightly larger than yearly default */
+.kpi-section-quarterly .kpi-value {
+    font-size: 1.45em;
 }
 
 /* Responsive adjustments */
 @media (max-width: 1200px) {
-    .model-controls {
-        width: 100%;
-        max-width: 100%;
+    .sliders-panel.model-controls {
+        width: 100% !important;
+        max-width: 100% !important;
     }
     
     .quarterly-filter {

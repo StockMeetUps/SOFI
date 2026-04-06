@@ -478,9 +478,22 @@ function updateModel() {
     document.getElementById('q1_2026Revenue').textContent = '$' + Q1_2026_CURRENT.netRevenue.toLocaleString() + 'M';
     document.getElementById('q1_2026NetIncome').textContent = '$' + Q1_2026_CURRENT.netIncome.toLocaleString() + 'M';
     document.getElementById('q1_2026EPS').textContent = Q1_2026_CURRENT.eps + '¢';
-    const qoqGrowth = ((Q1_2026_CURRENT.netRevenue - Q4_2025_REF.netRevenue) / Q4_2025_REF.netRevenue * 100).toFixed(1);
-    document.getElementById('q1_2026QoQGrowth').textContent = '+' + qoqGrowth + '%';
+    const qoqGrowthNum = ((Q1_2026_CURRENT.netRevenue - Q4_2025_REF.netRevenue) / Q4_2025_REF.netRevenue) * 100;
+    const qoqGrowth = qoqGrowthNum.toFixed(1);
+    const qoqEl = document.getElementById('q1_2026QoQGrowth');
+    qoqEl.textContent = (qoqGrowthNum >= 0 ? '+' : '') + qoqGrowth + '%';
+    qoqEl.style.color = qoqGrowthNum >= 0 ? '#4caf50' : '#f44336';
     document.getElementById('q1_2026EBITDA').textContent = '$' + Q1_2026_CURRENT.ebitda.toLocaleString() + 'M';
+
+    const q1_25 = QUARTERLY_ACTUALS.Q1;
+    const yoyRevPct = ((Q1_2026_CURRENT.netRevenue - q1_25.netRevenue) / q1_25.netRevenue) * 100;
+    const yoyNiPct = ((Q1_2026_CURRENT.netIncome - q1_25.netIncome) / q1_25.netIncome) * 100;
+    const yoyRevEl = document.getElementById('q1_2026YoYRevenue');
+    const yoyNiEl = document.getElementById('q1_2026YoYNI');
+    yoyRevEl.textContent = (yoyRevPct >= 0 ? '+' : '') + yoyRevPct.toFixed(1) + '%';
+    yoyRevEl.style.color = yoyRevPct >= 0 ? '#4caf50' : '#f44336';
+    yoyNiEl.textContent = (yoyNiPct >= 0 ? '+' : '') + yoyNiPct.toFixed(1) + '%';
+    yoyNiEl.style.color = yoyNiPct >= 0 ? '#4caf50' : '#f44336';
     
     // Update charts
     updateAllCharts(data);
