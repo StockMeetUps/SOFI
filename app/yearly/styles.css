@@ -210,7 +210,7 @@ body {
 }
 
 .chart-card canvas {
-    max-height: 171px;
+    max-height: 198px;
     width: 100% !important;
 }
 
@@ -821,7 +821,7 @@ tbody tr:hover td {
     }
     
     .chart-card canvas {
-        max-height: 188px;
+        max-height: 210px;
     }
     
     .filters-vertical-list {

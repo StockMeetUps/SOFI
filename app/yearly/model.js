@@ -1052,6 +1052,14 @@ const COLORS = {
     purple: '#9c27b0'
 };
 
+/** Shared font sizes for Chart.js legends, axes, and datalabels (readability) */
+const CHART_TYPOGRAPHY = {
+    legend: { size: 13, weight: '700', family: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif" },
+    axis: { size: 12, weight: '600', family: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif" },
+    dataLabel: { size: 13, weight: '700', family: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif" },
+    dataLabelCompact: { size: 11, weight: '700', family: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif" }
+};
+
 // Initialize charts
 function initializeCharts() {
     // Register datalabels plugin
@@ -1061,11 +1069,16 @@ function initializeCharts() {
     
     const legendLabelStyle = {
         color: '#111827',
-        boxWidth: 12,
-        padding: 10,
-        font: { size: 11, weight: '700' }
+        boxWidth: 14,
+        padding: 12,
+        font: CHART_TYPOGRAPHY.legend
     };
-    const axisTickFont = { size: 10, weight: '600' };
+    const axisTickStyle = {
+        color: '#111827',
+        font: CHART_TYPOGRAPHY.axis,
+        maxRotation: 0,
+        autoSkip: true
+    };
     const commonOptions = {
         responsive: true,
         maintainAspectRatio: true,
@@ -1073,15 +1086,18 @@ function initializeCharts() {
             legend: { display: true, position: 'top', align: 'center', labels: legendLabelStyle },
             datalabels: {
                 display: true,
-                color: '#333',
+                clip: false,
+                color: '#111827',
                 anchor: 'end',
                 align: 'top',
-                font: { size: 11, weight: 'bold' }
+                offset: 4,
+                padding: { top: 2, bottom: 0 },
+                font: CHART_TYPOGRAPHY.dataLabel
             }
         },
         scales: {
-            y: { beginAtZero: true, grid: { color: 'rgba(0,0,0,0.05)' }, ticks: { color: '#374151', font: axisTickFont } },
-            x: { grid: { display: false }, ticks: { color: '#374151', font: axisTickFont } }
+            y: { beginAtZero: true, grid: { color: 'rgba(0,0,0,0.05)' }, ticks: axisTickStyle },
+            x: { grid: { display: false }, ticks: axisTickStyle }
         }
     };
     
@@ -1326,7 +1342,7 @@ function initializeSegmentCharts() {
                         text: 'Total Revenue by Segment',
                         position: 'top',
                         align: 'start',
-                        font: { size: 13, weight: '700' },
+                        font: { size: 14, weight: '700', family: CHART_TYPOGRAPHY.legend.family },
                         color: '#111827',
                         padding: { top: 5, bottom: 5 }
                     },
@@ -1335,24 +1351,25 @@ function initializeSegmentCharts() {
                         align: 'end', 
                         labels: { 
                             color: '#111827', 
-                            boxWidth: 12, 
-                            padding: 10, 
-                            font: { size: 11, weight: '700' },
+                            boxWidth: 14, 
+                            padding: 12, 
+                            font: CHART_TYPOGRAPHY.legend,
                             usePointStyle: false
                         }
                     }, 
                     datalabels: { 
                         display: true,
-                        color: '#000',
-                        font: { weight: 'bold', size: 9 },
+                        clip: false,
+                        color: '#111827',
+                        font: CHART_TYPOGRAPHY.dataLabelCompact,
                         anchor: 'center',
                         align: 'center',
                         formatter: v => v > 0.5 ? '$' + v.toFixed(1) + 'B' : ''
                     }
                 },
                 scales: {
-                    x: { stacked: true, ticks: { color: '#374151', font: { size: 10, weight: '600' } }, grid: { color: 'rgba(0,0,0,0.05)' } },
-                    y: { stacked: true, min: 0, max: 17, ticks: { color: '#374151', font: { size: 10, weight: '600' }, callback: v => '$' + v + 'B' }, grid: { color: 'rgba(0,0,0,0.05)' } }
+                    x: { stacked: true, ticks: { color: '#111827', font: CHART_TYPOGRAPHY.axis }, grid: { color: 'rgba(0,0,0,0.05)' } },
+                    y: { stacked: true, min: 0, max: 17, ticks: { color: '#111827', font: CHART_TYPOGRAPHY.axis, callback: v => '$' + v + 'B' }, grid: { color: 'rgba(0,0,0,0.05)' } }
                 }
             }
         });
@@ -1385,19 +1402,20 @@ function initializeSegmentCharts() {
             options: {
                 responsive: true,
                 plugins: { 
-                    legend: { display: true, position: 'top', labels: { color: '#111827', boxWidth: 12, padding: 8, font: { size: 11, weight: '700' } } }, 
+                    legend: { display: true, position: 'top', labels: { color: '#111827', boxWidth: 14, padding: 10, font: CHART_TYPOGRAPHY.legend } }, 
                     datalabels: { 
+                        clip: false,
                         anchor: 'end', 
                         align: 'top', 
-                        offset: 2,
-                        color: '#333', 
-                        font: { weight: 'bold', size: 10 }, 
+                        offset: 4,
+                        color: '#111827', 
+                        font: CHART_TYPOGRAPHY.dataLabel, 
                         formatter: v => '$' + v.toFixed(2) + 'B'
                     } 
                 },
                 scales: { 
-                    y: { min: 0, max: 8, ticks: { color: '#374151', font: { size: 10, weight: '600' } }, grid: { color: 'rgba(0,0,0,0.05)' } }, 
-                    x: { ticks: { color: '#374151', font: { size: 10, weight: '600' } }, grid: { color: 'rgba(0,0,0,0.05)' } } 
+                    y: { min: 0, max: 8, ticks: { color: '#111827', font: CHART_TYPOGRAPHY.axis }, grid: { color: 'rgba(0,0,0,0.05)' } }, 
+                    x: { ticks: { color: '#111827', font: CHART_TYPOGRAPHY.axis }, grid: { color: 'rgba(0,0,0,0.05)' } } 
                 }
             }
         });
@@ -1427,19 +1445,20 @@ function initializeSegmentCharts() {
             options: {
                 responsive: true,
                 plugins: { 
-                    legend: { display: true, position: 'top', labels: { color: '#111827', boxWidth: 12, padding: 8, font: { size: 11, weight: '700' } } }, 
+                    legend: { display: true, position: 'top', labels: { color: '#111827', boxWidth: 14, padding: 10, font: CHART_TYPOGRAPHY.legend } }, 
                     datalabels: { 
+                        clip: false,
                         anchor: 'end', 
                         align: 'top', 
-                        offset: 2,
-                        color: '#333', 
-                        font: { weight: 'bold', size: 10 }, 
+                        offset: 4,
+                        color: '#111827', 
+                        font: CHART_TYPOGRAPHY.dataLabel, 
                         formatter: v => '$' + v.toFixed(2) + 'B'
                     } 
                 },
                 scales: { 
-                    y: { min: 0, max: 10, ticks: { color: '#374151', font: { size: 10, weight: '600' } }, grid: { color: 'rgba(0,0,0,0.05)' } }, 
-                    x: { ticks: { color: '#374151', font: { size: 10, weight: '600' } }, grid: { color: 'rgba(0,0,0,0.05)' } } 
+                    y: { min: 0, max: 10, ticks: { color: '#111827', font: CHART_TYPOGRAPHY.axis }, grid: { color: 'rgba(0,0,0,0.05)' } }, 
+                    x: { ticks: { color: '#111827', font: CHART_TYPOGRAPHY.axis }, grid: { color: 'rgba(0,0,0,0.05)' } } 
                 }
             }
         });
@@ -1470,19 +1489,20 @@ function initializeSegmentCharts() {
             options: {
                 responsive: true,
                 plugins: { 
-                    legend: { display: true, position: 'top', labels: { color: '#111827', boxWidth: 12, padding: 8, font: { size: 11, weight: '700' } } }, 
+                    legend: { display: true, position: 'top', labels: { color: '#111827', boxWidth: 14, padding: 10, font: CHART_TYPOGRAPHY.legend } }, 
                     datalabels: { 
+                        clip: false,
                         anchor: 'end', 
                         align: 'top', 
-                        offset: 2,
-                        color: '#333', 
-                        font: { weight: 'bold', size: 10 }, 
+                        offset: 4,
+                        color: '#111827', 
+                        font: CHART_TYPOGRAPHY.dataLabel, 
                         formatter: v => '$' + v.toFixed(2) + 'B'
                     } 
                 },
                 scales: { 
-                    y: { min: 0, max: 2, ticks: { color: '#374151', font: { size: 10, weight: '600' } }, grid: { color: 'rgba(0,0,0,0.05)' } }, 
-                    x: { ticks: { color: '#374151', font: { size: 10, weight: '600' } }, grid: { color: 'rgba(0,0,0,0.05)' } } 
+                    y: { min: 0, max: 2, ticks: { color: '#111827', font: CHART_TYPOGRAPHY.axis }, grid: { color: 'rgba(0,0,0,0.05)' } }, 
+                    x: { ticks: { color: '#111827', font: CHART_TYPOGRAPHY.axis }, grid: { color: 'rgba(0,0,0,0.05)' } } 
                 }
             }
         });
