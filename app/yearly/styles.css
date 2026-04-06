@@ -88,18 +88,64 @@ body {
 
 /* Header Note */
 .header-note {
-    background: #f8f9fa;
-    padding: 8px 12px;
-    border-radius: 6px;
-    margin-bottom: 10px;
-    border-left: 3px solid #00a5e5;
+    background: #fff;
+    padding: 14px 18px;
+    border-radius: 8px;
+    margin-bottom: 12px;
+    border: 1px solid #e8eef4;
+    border-left: 4px solid #00a5e5;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06);
+    max-width: 72ch;
+    color: #1f2937;
 }
 
-.header-note p {
-    font-size: 0.75em;
-    color: #555;
+.header-note-lead,
+.header-note-context {
+    font-size: 0.88em;
+    line-height: 1.6;
+    margin: 0 0 10px 0;
+    color: #374151;
+}
+
+.header-note-context {
+    margin-bottom: 12px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid #eef2f7;
+}
+
+.header-note strong {
+    color: #111827;
+    font-weight: 700;
+}
+
+.header-note-catalysts {
     margin: 0;
-    line-height: 1.4;
+}
+
+.header-note-catalysts-title {
+    display: block;
+    font-size: 0.82em;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: #111827;
+    margin-bottom: 8px;
+}
+
+.header-note-list {
+    margin: 0;
+    padding: 0 0 0 1.2em;
+    font-size: 0.86em;
+    line-height: 1.55;
+    color: #374151;
+}
+
+.header-note-list li {
+    margin-bottom: 6px;
+    padding-left: 4px;
+}
+
+.header-note-list li:last-child {
+    margin-bottom: 0;
 }
 
 /* KPI Cards Section */
