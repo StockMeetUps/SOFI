@@ -788,36 +788,63 @@ function initializeCharts() {
     
     // Segment YoY refs: indices 0-3 = FY24, index 4 = Q1 FY25
     const yoySegmentRefs = [FY2024_SEGMENT_DATA.Q1, FY2024_SEGMENT_DATA.Q2, FY2024_SEGMENT_DATA.Q3, FY2024_SEGMENT_DATA.Q4, Q1_2025_REF];
-    
+
+    /** Match yearly model: Chart.js legends, axes, datalabels (app/yearly/model.js) */
+    const CHART_TYPOGRAPHY = {
+        legend: { size: 13, weight: '700', family: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif" },
+        axis: { size: 12, weight: '600', family: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif" },
+        dataLabel: { size: 13, weight: '700', family: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif" },
+        dataLabelCompact: { size: 11, weight: '700', family: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif" }
+    };
+    const legendLabelStyle = {
+        color: '#111827',
+        boxWidth: 14,
+        padding: 12,
+        font: CHART_TYPOGRAPHY.legend
+    };
+    const axisTickStyle = {
+        color: '#111827',
+        font: CHART_TYPOGRAPHY.axis,
+        maxRotation: 0,
+        autoSkip: true
+    };
+
     const commonOptions = {
         responsive: true,
         maintainAspectRatio: true,
         aspectRatio: 1.91,
         plugins: {
-            legend: { 
-                display: true, 
+            legend: {
+                display: true,
                 position: 'top',
-                labels: { color: '#000000', font: { size: 11 } }
+                align: 'center',
+                labels: legendLabelStyle
             },
             datalabels: {
                 display: true,
-                color: '#000000',
+                clip: false,
+                color: '#111827',
                 anchor: 'end',
                 align: 'top',
                 offset: 4,
-                font: { size: 10, weight: 'bold' },
-                padding: { top: 4 }
+                padding: { top: 2, bottom: 0 },
+                font: CHART_TYPOGRAPHY.dataLabel
+            },
+            tooltip: {
+                bodyFont: { family: CHART_TYPOGRAPHY.legend.family, size: 12, weight: '400' },
+                titleFont: { family: CHART_TYPOGRAPHY.legend.family, size: 12, weight: '600' },
+                padding: 10
             }
         },
         scales: {
             y: {
                 beginAtZero: true,
-                ticks: { color: '#000000' },
-                grid: { color: 'rgba(0, 0, 0, 0.08)' }
+                grid: { color: 'rgba(0, 0, 0, 0.05)' },
+                ticks: axisTickStyle
             },
             x: {
-                ticks: { color: '#000000', font: { size: 9 } },
-                grid: { color: 'rgba(0, 0, 0, 0.08)' }
+                grid: { display: false },
+                ticks: axisTickStyle
             }
         }
     };
@@ -842,12 +869,7 @@ function initializeCharts() {
                 plugins: {
                     ...commonOptions.plugins,
                     datalabels: {
-                        display: true,
-                        color: '#000000',
-                        anchor: 'end',
-                        align: 'top',
-                        offset: 4,
-                        font: { size: 9, weight: 'bold' },
+                        ...commonOptions.plugins.datalabels,
                         formatter: (value, context) => {
                             const data = context.chart.data.datasets[0].data;
                             const index = context.dataIndex;
@@ -904,20 +926,17 @@ function initializeCharts() {
                     legend: {
                         display: true,
                         position: 'top',
-                        labels: { color: '#000000', font: { size: 10 }, boxWidth: 12, padding: 8 }
+                        align: 'center',
+                        labels: legendLabelStyle
                     },
                     datalabels: {
+                        ...commonOptions.plugins.datalabels,
                         display: function(context) {
                             const datasetIndex = context.datasetIndex;
                             const dataIndex = context.dataIndex;
                             if (dataIndex === 3) return datasetIndex === 1;
                             return datasetIndex === 0;
                         },
-                        color: '#000000',
-                        anchor: 'end',
-                        align: 'top',
-                        offset: 4,
-                        font: { size: 9, weight: 'bold' },
                         formatter: (value, context) => {
                             const dataIndex = context.dataIndex;
                             const baseData = context.chart.data.datasets[0].data;
@@ -969,11 +988,10 @@ function initializeCharts() {
                 plugins: {
                     ...commonOptions.plugins,
                     datalabels: {
-                        display: true,
-                        color: '#000000',
+                        ...commonOptions.plugins.datalabels,
                         anchor: 'center',
                         align: 'center',
-                        font: { size: 8, weight: 'bold' },
+                        font: CHART_TYPOGRAPHY.dataLabelCompact,
                         formatter: (value, context) => {
                             if (value <= 100) return '';
                             const datasetIndex = context.datasetIndex;
@@ -1021,7 +1039,10 @@ function initializeCharts() {
                 ...commonOptions,
                 plugins: {
                     ...commonOptions.plugins,
-                    datalabels: { ...commonOptions.plugins.datalabels, formatter: (v) => v + '¢' }
+                    datalabels: {
+                        ...commonOptions.plugins.datalabels,
+                        formatter: (v) => v + '¢'
+                    }
                 }
             }
         });
@@ -1054,12 +1075,8 @@ function initializeCharts() {
                 plugins: {
                     ...commonOptions.plugins,
                     datalabels: {
-                        display: true,
-                        color: '#000000',
-                        anchor: 'end',
-                        align: 'top',
+                        ...commonOptions.plugins.datalabels,
                         offset: 6,
-                        font: { size: 10, weight: 'bold' },
                         formatter: (value, context) => {
                             const data = context.chart.data.datasets[0].data;
                             const index = context.dataIndex;
@@ -1107,12 +1124,8 @@ function initializeCharts() {
                 plugins: {
                     ...commonOptions.plugins,
                     datalabels: {
-                        display: true,
-                        color: '#000000',
-                        anchor: 'end',
-                        align: 'top',
+                        ...commonOptions.plugins.datalabels,
                         offset: 6,
-                        font: { size: 11, weight: 'bold' },
                         formatter: (v) => v.toFixed(1) + 'M'
                     }
                 }
@@ -1144,11 +1157,10 @@ function initializeCharts() {
                 plugins: {
                     ...commonOptions.plugins,
                     datalabels: {
-                        display: true,
-                        color: '#000000',
+                        ...commonOptions.plugins.datalabels,
                         anchor: 'center',
                         align: 'center',
-                        font: { size: 9, weight: 'bold' },
+                        font: CHART_TYPOGRAPHY.dataLabelCompact,
                         formatter: (v) => v >= 130 ? '$' + v + 'M' : ''
                     }
                 }
@@ -1183,12 +1195,8 @@ function initializeCharts() {
                 plugins: {
                     ...commonOptions.plugins,
                     datalabels: {
-                        display: true,
-                        color: '#000000',
-                        anchor: 'end',
-                        align: 'top',
+                        ...commonOptions.plugins.datalabels,
                         offset: 6,
-                        font: { size: 11, weight: 'bold' },
                         formatter: (v) => v.toFixed(1) + '%'
                     }
                 },
@@ -1228,7 +1236,6 @@ function initializeCharts() {
                     ...commonOptions.plugins,
                     datalabels: {
                         ...commonOptions.plugins.datalabels,
-                        font: { size: 9, weight: 'bold' },
                         formatter: (value, context) => {
                             const data = context.chart.data.datasets[0].data;
                             const index = context.dataIndex;
@@ -1268,7 +1275,7 @@ function initializeCharts() {
                     ...commonOptions.plugins,
                     datalabels: {
                         ...commonOptions.plugins.datalabels,
-                        font: { size: 9, weight: 'bold' },
+                        font: CHART_TYPOGRAPHY.dataLabelCompact,
                         formatter: (v) => (v >= 0 ? '+' : '') + v.toFixed(0) + '%'
                     }
                 },
