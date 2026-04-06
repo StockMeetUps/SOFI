@@ -184,11 +184,11 @@ body {
     margin-top: 15px;
 }
 
-/* Chart Row */
-.chart-row {
+/* Chart grid: 3 columns on wide screens */
+.charts-grid {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 12px;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
 }
 
 /* Chart Card */
@@ -210,7 +210,7 @@ body {
 }
 
 .chart-card canvas {
-    max-height: 198px;
+    max-height: 175px;
     width: 100% !important;
 }
 
@@ -720,6 +720,16 @@ tbody tr:hover td {
 }
 
 /* Responsive Design */
+@media (max-width: 1600px) {
+    .charts-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .chart-card canvas {
+        max-height: 188px;
+    }
+}
+
 @media (max-width: 1400px) {
     .kpi-section {
         grid-template-columns: repeat(3, 1fr);
@@ -764,7 +774,7 @@ tbody tr:hover td {
         max-height: none;
     }
     
-    .chart-row {
+    .charts-grid {
         grid-template-columns: 1fr;
     }
     

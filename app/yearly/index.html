@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SOFI Technologies : 5 Year Simulation Model</title>
-    <link rel="stylesheet" href="styles.css?v=20260419">
+    <link rel="stylesheet" href="styles.css?v=20260420">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
     <style>
@@ -141,10 +141,9 @@
                     </div>
                 </section>
 
-                <!-- Charts Section -->
+                <!-- Charts Section: 3 columns on wide screens, 2 / 1 on smaller -->
                 <div class="charts-column">
-                <!-- Row 1: Revenue Growth % and Revenue Projection -->
-                <div class="chart-row">
+                <div class="charts-grid">
                     <div class="chart-card">
                         <h3>SOFI : Revenue Growth % Projection</h3>
                         <canvas id="revenueGrowthChart"></canvas>
@@ -153,10 +152,6 @@
                         <h3>SOFI : Revenue Projection</h3>
                         <canvas id="revenueChart"></canvas>
                     </div>
-                </div>
-
-                <!-- Row 2: Net Income % and Net Income -->
-                <div class="chart-row">
                     <div class="chart-card">
                         <h3>SOFI : Net Income % Projection</h3>
                         <canvas id="netIncomeMarginChart"></canvas>
@@ -165,10 +160,6 @@
                         <h3>SOFI : Net Income Projection</h3>
                         <canvas id="profitabilityChart"></canvas>
                     </div>
-                </div>
-
-                <!-- Row 3: Stock Price Trend and EPS Trend -->
-                <div class="chart-row">
                     <div class="chart-card">
                         <h3>SOFI : Stock Price Trend Projection</h3>
                         <canvas id="scenarioChart"></canvas>
@@ -177,10 +168,6 @@
                         <h3>SOFI : EPS Trend Projection</h3>
                         <canvas id="epsChart"></canvas>
                     </div>
-                </div>
-
-                <!-- Row 4: FWD PEG Ratio and Implied FWD P/E -->
-                <div class="chart-row">
                     <div class="chart-card">
                         <h3 id="pegChartHeading">SOFI : FWD PEG Ratio (2026–2030)</h3>
                         <canvas id="pegRatioChart"></canvas>
@@ -189,10 +176,6 @@
                         <h3>SOFI : Implied FWD P/E (at Current Price)</h3>
                         <canvas id="peRatioChart"></canvas>
                     </div>
-                </div>
-
-                <!-- Row 5: Member Growth % and Member Growth -->
-                <div class="chart-row">
                     <div class="chart-card">
                         <h3>SOFI : Member Growth % Projection</h3>
                         <canvas id="memberGrowthChart"></canvas>
@@ -201,10 +184,6 @@
                         <h3>SOFI : Member Growth Projection</h3>
                         <canvas id="memberChart"></canvas>
                     </div>
-                </div>
-
-                <!-- Row 5: Sales & Marketing Spend and S&M % of Revenue -->
-                <div class="chart-row">
                     <div class="chart-card">
                         <h3>SOFI : Sales & Marketing Spend ($B) Projection</h3>
                         <canvas id="salesMarketingChart"></canvas>
@@ -213,10 +192,6 @@
                         <h3>SOFI : Sales & Marketing (% of Revenue) Projection</h3>
                         <canvas id="salesMarketingPercentChart"></canvas>
                     </div>
-                </div>
-
-                <!-- Row 6: Member Acquisition Cost and Market Cap Trend -->
-                <div class="chart-row">
                     <div class="chart-card">
                         <h3>SOFI : Member Acquisition Cost Projection</h3>
                         <canvas id="memberAcquisitionChart"></canvas>
