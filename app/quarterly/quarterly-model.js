@@ -146,18 +146,18 @@ const Q4_2025_REF = {
 // ============================================
 // Based on ~8.1% QoQ growth from Q4 2025 and 2026 guidance:
 // - Overall: 8.1% QoQ ($1,025M → $1,108M), ~30% annual growth pace
-// - Lending: +0.6% QoQ, +22% YoY
-// - Financial Services: +6.3% QoQ, +60% YoY (fastest growing)
-// - Tech Platform: -1.6% QoQ, +17% YoY
+// - Lending: ~flat QoQ vs Q4 (offset to hold total rev)
+// - Financial Services: lower QoQ% vs prior draft (offset to hold total rev)
+// - Tech Platform: +2% QoQ vs Q4 ($122M → $124M); lending/FS adjusted so total rev unchanged
 // - Members: 1.2M net new in Q1 2026 (14.9M total vs Q4 FY25 13.7M)
 // - Margins: Higher investment cycle (net margin 17.0% → 15.9%)
 
 const Q1_2026_DEFAULTS = {
-    // Revenue segments (8.1% QoQ total from Q4 FY25)
-    lending: 502,          // +0.6% QoQ from Q4 $499M, +22% YoY from Q1 FY25 $413M
-    techPlatform: 120,     // -1.6% QoQ from Q4 $122M, +17% YoY from Q1 FY25 $103M
-    financialServices: 492, // +7.7% QoQ from Q4 $457M, +62% YoY from Q1 FY25 $303M
-    netRevenue: 1114,      // +8.7% QoQ from Q4 $1,025M (502+120+492)
+    // Revenue segments (same $1,114M total as before: 500+124+490)
+    lending: 500,          // vs Q4 $499M; −$2M vs prior default to offset tech
+    techPlatform: 124,     // +2% QoQ vs Q4 $122M (slider impact rounds QoQ to +2%)
+    financialServices: 490, // vs Q4 $457M; −$2M vs prior default to offset tech
+    netRevenue: 1114,      // unchanged total vs Q4 $1,025M (+8.7% QoQ overall)
     // Expenses (higher investment in growth)
     salesMarketing: 345,   // +15.0% QoQ from Q4 $300M
     gAndA: 195,            // +2.6% QoQ from Q4 $190M
