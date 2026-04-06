@@ -4,7 +4,7 @@
 
 // Base stock price
 const BASE_DATA = {
-    currentPrice: 26.60,
+    currentPrice: null,
     sharesOutstanding: 1.26 // Billions
 };
 
@@ -702,6 +702,8 @@ async function updateCurrentStockPrice() {
     if (changeElement) changeElement.textContent = '';
     if (BASE_DATA.currentPrice && priceElement) {
         priceElement.textContent = `$${BASE_DATA.currentPrice.toFixed(2)}`;
+    } else if (priceElement) {
+        priceElement.textContent = 'Loading...';
     }
     
     // Try multiple proxies/APIs for reliability (same as Yearly model)
@@ -742,6 +744,13 @@ async function updateCurrentStockPrice() {
             }
         } catch (error) {
             console.log(`Proxy failed: ${proxy.url.substring(0, 40)}..., trying next`);
+        }
+    }
+    
+    if (!fetched) {
+        console.warn('All stock price fetches failed; live quote unavailable until a request succeeds.');
+        if (priceElement && !BASE_DATA.currentPrice) {
+            priceElement.textContent = 'Unavailable';
         }
     }
     

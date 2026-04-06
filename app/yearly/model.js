@@ -24,7 +24,7 @@ function initializeAllSliderFills() {
 
 // Base data (2024)
 const BASE_DATA = {
-    currentPrice: 20.86,
+    currentPrice: null,
     sharesOutstanding: 1.251767, // Billions
     revenue2024: 2600.000, // In thousands (millions) - from 2024 data
     members2024: 10.127 // Millions (10,127,000 absolute = 10.127M)
@@ -245,7 +245,7 @@ function updateAllChartsWithData(projections) {
         const trends = calculateScenarioTrends(projections);
         const filtered = trends.years.map((y, i) => y >= 2025 ? i : -1).filter(i => i !== -1);
         scenarioChart.data.labels = filtered.map(i => trends.years[i].toString());
-        scenarioChart.data.datasets[0].data = filtered.map(i => trends.years[i] === 2025 ? 26 : trends.prices[i]);
+        scenarioChart.data.datasets[0].data = filtered.map(i => trends.prices[i]);
         scenarioChart.update();
     }
     
@@ -253,7 +253,7 @@ function updateAllChartsWithData(projections) {
         const trends = calculateMarketCapTrends(projections);
         const filtered = trends.years.map((y, i) => y >= 2025 ? i : -1).filter(i => i !== -1);
         marketCapChart.data.labels = filtered.map(i => trends.years[i].toString());
-        marketCapChart.data.datasets[0].data = filtered.map(i => trends.years[i] === 2025 ? 32 : trends.marketCaps[i]);
+        marketCapChart.data.datasets[0].data = filtered.map(i => trends.marketCaps[i]);
         marketCapChart.update();
     }
     
@@ -332,6 +332,7 @@ function updateAllChartsWithData(projections) {
         const peFiltered = projections.filter(p => p.year >= 2026 && p.eps && p.eps > 0);
         const peYears = peFiltered.map(p => p.year.toString());
         const impliedPE = peFiltered.map(p => {
+            if (BASE_DATA.currentPrice == null) return null;
             return parseFloat((BASE_DATA.currentPrice / p.eps).toFixed(1));
         });
         peRatioChart.data.labels = peYears;
@@ -591,12 +592,17 @@ function calculateMarketCapTrends(projections) {
     projections.forEach(proj => {
         if (proj.netIncome && proj.netIncome > 0) {
             trends.years.push(proj.year);
-            const netIncomeBillions = proj.netIncome / 1000000;
-            const sharesOutstanding = proj.year === 2030 ? MODEL_ASSUMPTIONS.sharesOutstanding2030 : BASE_DATA.sharesOutstanding;
-            const peRatio = MODEL_ASSUMPTIONS[`peRatio${proj.year}`] || MODEL_ASSUMPTIONS.peRatio2030;
-            const eps = netIncomeBillions / sharesOutstanding;
-            const price = eps * peRatio;
-            trends.marketCaps.push(price * sharesOutstanding);
+            if (proj.year === 2025) {
+                const live = BASE_DATA.currentPrice;
+                trends.marketCaps.push(live != null ? live * BASE_DATA.sharesOutstanding : null);
+            } else {
+                const netIncomeBillions = proj.netIncome / 1000000;
+                const sharesOutstanding = proj.year === 2030 ? MODEL_ASSUMPTIONS.sharesOutstanding2030 : BASE_DATA.sharesOutstanding;
+                const peRatio = MODEL_ASSUMPTIONS[`peRatio${proj.year}`] || MODEL_ASSUMPTIONS.peRatio2030;
+                const eps = netIncomeBillions / sharesOutstanding;
+                const price = eps * peRatio;
+                trends.marketCaps.push(price * sharesOutstanding);
+            }
         }
     });
     
@@ -609,7 +615,10 @@ function calculateScenarioTrends(projections) {
     
     projections.forEach(proj => {
         trends.years.push(proj.year);
-        if (!proj.netIncome || proj.netIncome <= 0) {
+        if (proj.year === 2025) {
+            // Live quote only — no implied P/E placeholder for the current year
+            trends.prices.push(BASE_DATA.currentPrice != null ? BASE_DATA.currentPrice : null);
+        } else if (!proj.netIncome || proj.netIncome <= 0) {
             trends.prices.push(BASE_DATA.currentPrice);
         } else {
             const netIncomeBillions = proj.netIncome / 1000000;
@@ -653,7 +662,7 @@ function updateProjectionsTable(projections) {
         } else {
             proj.peRatio = null;
         }
-        proj.impliedPE = (proj.eps && proj.eps > 0) ? BASE_DATA.currentPrice / proj.eps : null;
+        proj.impliedPE = (proj.eps && proj.eps > 0 && BASE_DATA.currentPrice != null) ? BASE_DATA.currentPrice / proj.eps : null;
         if (proj.year <= 2025 && proj.eps && proj.eps > 0) {
             const price = proj.year === 2025 ? BASE_DATA.currentPrice : (YEAR_END_PRICES[proj.year] || null);
             proj.historicalPE = price ? price / proj.eps : null;
@@ -849,7 +858,8 @@ function updateUpsidePercentage(projectedPrice) {
     }
     if (!projectedPrice) return;
     
-    const currentPrice = BASE_DATA.currentPrice || 20.86;
+    const currentPrice = BASE_DATA.currentPrice;
+    if (!currentPrice) return;
     const upside = ((projectedPrice - currentPrice) / currentPrice) * 100;
     const upsideElement = document.getElementById('priceUpside');
     if (upsideElement) {
@@ -865,6 +875,8 @@ async function updateCurrentStockPrice() {
     if (changeElement) changeElement.textContent = '';
     if (BASE_DATA.currentPrice && priceElement) {
         priceElement.textContent = `$${BASE_DATA.currentPrice.toFixed(2)}`;
+    } else if (priceElement) {
+        priceElement.textContent = 'Loading...';
     }
     
     // Try multiple proxies/APIs for reliability
@@ -911,7 +923,10 @@ async function updateCurrentStockPrice() {
     }
     
     if (!fetched) {
-        console.log('All stock price fetches failed, using fallback');
+        console.warn('All stock price fetches failed; live quote unavailable until a request succeeds.');
+        if (priceElement && !BASE_DATA.currentPrice) {
+            priceElement.textContent = 'Unavailable';
+        }
     }
     
     setTimeout(updateCurrentStockPrice, 60000);
