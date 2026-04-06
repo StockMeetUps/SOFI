@@ -218,6 +218,17 @@ function getViewProjections(projections) {
     return projections.filter(p => p.year <= PROJECT_UNTIL_YEAR);
 }
 
+/** Show only per-year slider rows for 2026..PROJECT_UNTIL_YEAR in the main filters panel. */
+function updateYearControlRowsVisibility() {
+    const container = document.getElementById('yearControlsContainer');
+    if (!container) return;
+    container.querySelectorAll('.year-row[data-year]').forEach(function(row) {
+        const y = parseInt(row.getAttribute('data-year'), 10);
+        if (isNaN(y)) return;
+        row.style.display = y <= PROJECT_UNTIL_YEAR ? '' : 'none';
+    });
+}
+
 // Initialize model
 document.addEventListener('DOMContentLoaded', function() {
     try {
@@ -398,10 +409,12 @@ function initializeProjectUntilControl() {
     PROJECT_UNTIL_YEAR = parseInt(el.value, 10);
     valEl.textContent = String(PROJECT_UNTIL_YEAR);
     updateSliderFill(el);
+    updateYearControlRowsVisibility();
     el.addEventListener('input', function() {
         PROJECT_UNTIL_YEAR = parseInt(this.value, 10);
         valEl.textContent = String(PROJECT_UNTIL_YEAR);
         updateSliderFill(this);
+        updateYearControlRowsVisibility();
         updateAllChartsWithData(calculateProjections());
     });
 }
@@ -444,6 +457,7 @@ function initializeSliders() {
         for (let year = 2026; year <= 2030; year++) {
             const yearRow = document.createElement('div');
             yearRow.className = 'year-row';
+            yearRow.setAttribute('data-year', String(year));
             
             const yearLabel = document.createElement('div');
             yearLabel.className = 'year-label';
@@ -476,6 +490,7 @@ function initializeSliders() {
     });
     
     container.appendChild(filtersContainer);
+    updateYearControlRowsVisibility();
 }
 
 // Reset controls
@@ -517,6 +532,7 @@ function resetControls() {
         updateSliderFill(projectUntilEl);
     }
     if (projectUntilVal) projectUntilVal.textContent = '2030';
+    updateYearControlRowsVisibility();
     updateModelWithSliders();
 }
 
