@@ -106,20 +106,13 @@ body {
 .header-intro-lead {
     font-size: 0.86em;
     line-height: 1.6;
-    margin: 0 0 8px 0;
+    margin: 0;
     max-width: none;
 }
 
 .header-intro strong {
     color: #111827;
     font-weight: 700;
-}
-
-.header-intro-catalysts {
-    font-size: 0.86em;
-    line-height: 1.6;
-    margin: 0;
-    color: #374151;
 }
 
 /* KPI Cards Section */
