@@ -349,8 +349,9 @@ function updateAllChartsWithData(projections) {
     }
     
     if (memberGrowthChart) {
-        memberGrowthChart.data.labels = years;
-        memberGrowthChart.data.datasets[0].data = view.map(p => p.memberGrowthRate);
+        const mgView = view.filter(p => p.year >= 2021);
+        memberGrowthChart.data.labels = mgView.map(p => p.year.toString());
+        memberGrowthChart.data.datasets[0].data = mgView.map(p => p.memberGrowthRate);
         memberGrowthChart.update();
     }
     
