@@ -141,13 +141,19 @@ const Q4_2025_REF = {
     netRevenue: 1025
 };
 
-// Prior-year net revenue (same quarter) for Rule of 40 YoY: FY24 Q1–Q4, then Q1 FY25 for Q1 FY26
-const PRIOR_YEAR_NET_REVENUE_Q = [
-    FY2024_QUARTERS.Q1.netRevenue,
-    FY2024_QUARTERS.Q2.netRevenue,
-    FY2024_QUARTERS.Q3.netRevenue,
-    FY2024_QUARTERS.Q4.netRevenue,
-    QUARTERLY_ACTUALS.Q1.netRevenue
+/** Rule of 40 history (Q4 21 → Q4 25): adj. net revenue growth % + adj. EBITDA margin % (earnings-style presentation). Q1 26 appended live from model. */
+const RULE_OF_40_LABELS = [
+    'Q4 21', 'Q1 22', 'Q2 22', 'Q3 22', 'Q4 22',
+    'Q1 23', 'Q2 23', 'Q3 23', 'Q4 23',
+    'Q1 24', 'Q2 24', 'Q3 24', 'Q4 24',
+    'Q1 25', 'Q2 25', 'Q3 25', 'Q4 25',
+    'Q1 26'
+];
+const RULE_OF_40_ADJ_REV_GROWTH_HIST = [
+    54, 49, 50, 51, 58, 43, 37, 27, 34, 26, 22, 30, 24, 33, 44, 38, 37
+];
+const RULE_OF_40_ADJ_EBITDA_MARGIN_HIST = [
+    2, 3, 6, 11, 16, 16, 16, 18, 30, 25, 23, 27, 27, 27, 29, 29, 31
 ];
 
 // ============================================
@@ -576,21 +582,26 @@ function updateAllCharts(data) {
         segmentMixChart.update();
     }
     
-    // Rule of 40: YoY revenue growth % + EBITDA margin %
+    // Rule of 40: history (Q4 21–Q4 25) + Q1 26 from model (YoY net rev growth + EBITDA margin %)
     if (ruleOf40Chart) {
-        ruleOf40Chart.data.labels = quarters;
-        const yoyRev = data.map((d, i) =>
-            PRIOR_YEAR_NET_REVENUE_Q[i] > 0
-                ? ((d.netRevenue - PRIOR_YEAR_NET_REVENUE_Q[i]) / PRIOR_YEAR_NET_REVENUE_Q[i]) * 100
-                : 0
-        );
-        const ebitdaMargin = data.map(d =>
-            d.netRevenue > 0 ? (d.ebitda / d.netRevenue) * 100 : 0
-        );
-        const ruleScore = yoyRev.map((y, i) => y + ebitdaMargin[i]);
-        ruleOf40Chart.data.datasets[0].data = ruleScore;
-        ruleOf40Chart.data.datasets[1].data = ruleScore.map(() => 40);
-        ruleOf40Chart.$rule40Meta = { yoy: yoyRev, ebitdaM: ebitdaMargin };
+        const q1_26_yoyRev =
+            QUARTERLY_ACTUALS.Q1.netRevenue > 0
+                ? ((Q1_2026_CURRENT.netRevenue - QUARTERLY_ACTUALS.Q1.netRevenue) /
+                      QUARTERLY_ACTUALS.Q1.netRevenue) *
+                  100
+                : 0;
+        const q1_26_ebitdaM =
+            Q1_2026_CURRENT.netRevenue > 0
+                ? (Q1_2026_CURRENT.ebitda / Q1_2026_CURRENT.netRevenue) * 100
+                : 0;
+        const rev = [...RULE_OF_40_ADJ_REV_GROWTH_HIST, q1_26_yoyRev];
+        const ebitdaM = [...RULE_OF_40_ADJ_EBITDA_MARGIN_HIST, q1_26_ebitdaM];
+        const total = rev.map((r, i) => r + ebitdaM[i]);
+        ruleOf40Chart.data.labels = RULE_OF_40_LABELS;
+        ruleOf40Chart.data.datasets[0].data = rev;
+        ruleOf40Chart.data.datasets[1].data = ebitdaM;
+        ruleOf40Chart.data.datasets[2].data = total;
+        ruleOf40Chart.$rule40Meta = { rev, ebitdaM, total, q1_26_projected: true };
         ruleOf40Chart.update();
     }
     
@@ -1103,80 +1114,135 @@ function initializeCharts() {
         });
     }
     
-    // Rule of 40 — YoY revenue growth % + EBITDA margin %
+    // Rule of 40 — stacked bars (adj. revenue growth + adj. EBITDA margin) + line (total); Q4 21–Q4 25 fixed, Q1 26 from model
     const ruleOf40Ctx = document.getElementById('ruleOf40Chart');
     if (ruleOf40Ctx) {
+        const rofPlaceholder = () => new Array(RULE_OF_40_LABELS.length).fill(0);
         ruleOf40Chart = new Chart(ruleOf40Ctx.getContext('2d'), {
-            type: 'line',
+            type: 'bar',
             data: {
-                labels: [],
+                labels: [...RULE_OF_40_LABELS],
                 datasets: [
                     {
+                        type: 'bar',
+                        label: 'Adj. Net Revenue Growth (%)',
+                        data: rofPlaceholder(),
+                        backgroundColor: '#c8cdd4',
+                        borderColor: '#9ca3af',
+                        borderWidth: 1,
+                        stack: 'rule40',
+                        order: 1,
+                        datalabels: {
+                            color: '#111827',
+                            font: CHART_TYPOGRAPHY.dataLabelCompact,
+                            anchor: 'center',
+                            align: 'center',
+                            formatter: (v) => (v >= 4 ? Math.round(v) + '%' : '')
+                        }
+                    },
+                    {
+                        type: 'bar',
+                        label: 'Adj. EBITDA Margin (%)',
+                        data: rofPlaceholder(),
+                        backgroundColor: '#162a45',
+                        borderColor: '#0f172a',
+                        borderWidth: 1,
+                        stack: 'rule40',
+                        order: 1,
+                        datalabels: {
+                            color: '#ffffff',
+                            font: CHART_TYPOGRAPHY.dataLabelCompact,
+                            anchor: 'center',
+                            align: 'center',
+                            formatter: (v) => (v >= 4 ? Math.round(v) + '%' : '')
+                        }
+                    },
+                    {
+                        type: 'line',
                         label: 'Rule of 40',
-                        data: [],
+                        data: rofPlaceholder(),
                         borderColor: '#00A5E5',
-                        backgroundColor: 'rgba(0, 165, 229, 0.12)',
-                        tension: 0.35,
-                        fill: true,
+                        backgroundColor: 'rgba(0, 165, 229, 0.06)',
                         borderWidth: 3,
-                        pointRadius: 6,
+                        tension: 0.25,
+                        fill: false,
+                        pointRadius: 5,
                         pointBackgroundColor: '#00A5E5',
                         pointBorderColor: '#ffffff',
                         pointBorderWidth: 2,
-                        pointHoverRadius: 8,
-                        order: 0
-                    },
-                    {
-                        label: 'Benchmark (40)',
-                        data: [],
-                        borderColor: '#9ca3af',
-                        backgroundColor: 'transparent',
-                        borderDash: [6, 4],
-                        borderWidth: 2,
-                        fill: false,
-                        pointRadius: 0,
-                        pointHoverRadius: 0,
-                        tension: 0,
-                        order: 1
+                        pointHoverRadius: 7,
+                        spanGaps: true,
+                        order: 2,
+                        yAxisID: 'y',
+                        datalabels: {
+                            color: '#111827',
+                            font: { ...CHART_TYPOGRAPHY.dataLabel, weight: '800' },
+                            anchor: 'end',
+                            align: 'end',
+                            offset: 8,
+                            formatter: (v) =>
+                                v != null && !Number.isNaN(v) ? String(Math.round(v)) : ''
+                        }
                     }
                 ]
             },
             options: {
                 ...commonOptions,
+                aspectRatio: 2.75,
                 plugins: {
                     ...commonOptions.plugins,
+                    legend: {
+                        display: true,
+                        position: 'top',
+                        align: 'center',
+                        labels: legendLabelStyle
+                    },
                     datalabels: {
-                        ...commonOptions.plugins.datalabels,
-                        display: (ctx) => ctx.datasetIndex === 0,
-                        formatter: (v) => (v != null && !Number.isNaN(v) ? Number(v).toFixed(0) : '')
+                        clip: false
                     },
                     tooltip: {
                         ...commonOptions.plugins.tooltip,
+                        mode: 'index',
+                        intersect: false,
                         callbacks: {
-                            label: (ctx) => {
-                                if (ctx.datasetIndex === 1) return 'Benchmark: 40';
-                                const chart = ctx.chart;
-                                const meta = chart.$rule40Meta;
-                                const i = ctx.dataIndex;
-                                const y = ctx.parsed.y;
-                                if (!meta || meta.yoy[i] === undefined) {
-                                    return 'Rule of 40: ' + (y != null ? y.toFixed(1) : '');
-                                }
-                                return [
-                                    'Rule of 40: ' + y.toFixed(1),
-                                    'YoY revenue: ' + meta.yoy[i].toFixed(1) + '%',
-                                    'EBITDA margin: ' + meta.ebitdaM[i].toFixed(1) + '%'
-                                ];
+                            footer: (tooltipItems) => {
+                                const chart = tooltipItems[0]?.chart;
+                                const i = tooltipItems[0]?.dataIndex;
+                                const meta = chart?.$rule40Meta;
+                                if (!meta || i === undefined) return '';
+                                const suffix =
+                                    i === RULE_OF_40_LABELS.length - 1 ? ' · Q1 FY26 from model sliders' : '';
+                                return (
+                                    'Rule of 40: ' +
+                                    meta.total[i].toFixed(1) +
+                                    ' = ' +
+                                    meta.rev[i].toFixed(1) +
+                                    '% + ' +
+                                    meta.ebitdaM[i].toFixed(1) +
+                                    '%' +
+                                    suffix
+                                );
                             }
                         }
                     }
                 },
                 scales: {
                     ...commonOptions.scales,
+                    x: {
+                        ...commonOptions.scales.x,
+                        stacked: true,
+                        ticks: {
+                            ...commonOptions.scales.x.ticks,
+                            maxRotation: 40,
+                            minRotation: 0,
+                            font: { ...CHART_TYPOGRAPHY.axis, size: 10 }
+                        }
+                    },
                     y: {
                         ...commonOptions.scales.y,
+                        stacked: true,
                         beginAtZero: true,
-                        suggestedMax: 80,
+                        max: 100,
                         ticks: { ...commonOptions.scales.y.ticks, callback: (v) => v }
                     }
                 }
