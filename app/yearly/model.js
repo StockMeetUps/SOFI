@@ -192,7 +192,7 @@ const YEAR_END_PRICES = {
 // Chart instances
 let revenueChart, profitabilityChart, memberChart, scenarioChart, epsChart;
 let salesMarketingChart, salesMarketingPercentChart, memberAcquisitionChart, marketCapChart;
-let memberGrowthChart, peRatioChart, revenueGrowthChart, netIncomeMarginChart, historicalPEChart;
+let memberGrowthChart, peRatioChart, revenueGrowthChart, netIncomeMarginChart, pegRatioChart;
 
 // Initialize model
 document.addEventListener('DOMContentLoaded', function() {
@@ -317,15 +317,15 @@ function updateAllChartsWithData(projections) {
         netIncomeMarginChart.update();
     }
     
-    if (historicalPEChart) {
-        const histFiltered = projections.filter(p => p.year >= 2021 && p.year <= 2025);
-        historicalPEChart.data.labels = histFiltered.map(p => p.year.toString());
-        historicalPEChart.data.datasets[0].data = histFiltered.map(p => {
-            if (!p.eps || p.eps <= 0) return null;
-            const price = p.year === 2025 ? BASE_DATA.currentPrice : (YEAR_END_PRICES[p.year] || null);
-            return price ? parseFloat((price / p.eps).toFixed(1)) : null;
-        });
-        historicalPEChart.update();
+    if (pegRatioChart) {
+        const pegLabels = ['2026', '2027', '2028', '2029', '2030'];
+        const pegData = calculatePEGSeries(projections);
+        pegRatioChart.data.labels = pegLabels;
+        pegRatioChart.data.datasets[0].data = pegData;
+        const valid = pegData.filter(v => v != null && !isNaN(v));
+        const yMax = valid.length ? Math.max(3, Math.ceil(Math.max(...valid) * 1.15 * 10) / 10) : 3;
+        pegRatioChart.options.scales.y.max = yMax;
+        pegRatioChart.update();
     }
     
     if (peRatioChart) {
@@ -583,6 +583,23 @@ function calculatePEValuation(projections) {
     const marketCap = price * MODEL_ASSUMPTIONS.sharesOutstanding2030;
     
     return { price, marketCap };
+}
+
+/** FWD PEG = FWD P/E ÷ YoY EPS growth (%). Uses per-year FWD P/E sliders and projected EPS. */
+function calculatePEGSeries(projections) {
+    const byYear = {};
+    projections.forEach(p => { byYear[p.year] = p; });
+    const years = [2026, 2027, 2028, 2029, 2030];
+    return years.map(year => {
+        const curr = byYear[year];
+        const prev = byYear[year - 1];
+        if (!curr?.eps || curr.eps <= 0 || !prev?.eps || prev.eps <= 0) return null;
+        const growthPct = ((curr.eps - prev.eps) / prev.eps) * 100;
+        if (growthPct <= 0) return null;
+        const peRatio = MODEL_ASSUMPTIONS[`peRatio${year}`];
+        if (peRatio == null || peRatio <= 0) return null;
+        return parseFloat((peRatio / growthPct).toFixed(2));
+    });
 }
 
 // Calculate market cap trends
@@ -1085,16 +1102,30 @@ function initializeCharts() {
         });
     }
     
-    // Historical P/E Chart (year-end price / EPS, 2021-2025)
-    const histPECtx = document.getElementById('historicalPEChart');
-    if (histPECtx) {
-        historicalPEChart = new Chart(histPECtx.getContext('2d'), {
+    // FWD PEG Ratio Chart (FWD P/E ÷ YoY EPS growth %, 2026-2030)
+    const pegCtx = document.getElementById('pegRatioChart');
+    if (pegCtx) {
+        pegRatioChart = new Chart(pegCtx.getContext('2d'), {
             type: 'bar',
-            data: { labels: [], datasets: [{ label: 'P/E (Year-End Price / EPS)', data: [], backgroundColor: COLORS.green, borderRadius: 4 }] },
+            data: {
+                labels: [],
+                datasets: [{
+                    label: 'FWD PEG (FWD P/E ÷ YoY EPS Growth %)',
+                    data: [],
+                    backgroundColor: COLORS.green,
+                    borderRadius: 4
+                }]
+            },
             options: {
                 ...commonOptions,
-                scales: { ...commonOptions.scales, y: { ...commonOptions.scales.y, max: 120 } },
-                plugins: { ...commonOptions.plugins, datalabels: { ...commonOptions.plugins.datalabels, formatter: v => v ? v + 'x' : 'N/A' } }
+                scales: { ...commonOptions.scales, y: { ...commonOptions.scales.y, min: 0, max: 3 } },
+                plugins: {
+                    ...commonOptions.plugins,
+                    datalabels: {
+                        ...commonOptions.plugins.datalabels,
+                        formatter: v => (v != null && !isNaN(v)) ? v.toFixed(2) : 'N/A'
+                    }
+                }
             }
         });
     }
