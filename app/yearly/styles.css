@@ -120,12 +120,13 @@ body {
 }
 
 .kpi-label {
-    font-size: 0.7em;
-    color: #374151;
-    font-weight: 700;
+    font-size: 0.72em;
+    color: #111827;
+    font-weight: 800;
     text-transform: uppercase;
-    letter-spacing: 0.03em;
+    letter-spacing: 0.04em;
     margin-bottom: 5px;
+    -webkit-font-smoothing: antialiased;
 }
 
 .kpi-value {
@@ -139,16 +140,18 @@ body {
 }
 
 .kpi-unit {
-    font-size: 0.65em;
-    color: #00a5e5;
-    font-weight: 600;
+    font-size: 0.66em;
+    color: #0d8ec4;
+    font-weight: 700;
+    -webkit-font-smoothing: antialiased;
 }
 
 .kpi-upside {
-    font-size: 0.65em;
-    color: #666;
-    font-weight: 600;
+    font-size: 0.66em;
+    color: #4b5563;
+    font-weight: 700;
     margin-top: 2px;
+    -webkit-font-smoothing: antialiased;
 }
 
 .upside-value {
@@ -640,8 +643,9 @@ tbody tr:hover td {
     align-items: center;
     gap: 8px;
     font-size: 0.85em;
-    font-weight: 600;
-    color: #374151;
+    font-weight: 700;
+    color: #111827;
+    -webkit-font-smoothing: antialiased;
 }
 
 .legend-color {

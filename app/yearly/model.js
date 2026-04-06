@@ -1059,11 +1059,18 @@ function initializeCharts() {
         Chart.register(ChartDataLabels);
     }
     
+    const legendLabelStyle = {
+        color: '#111827',
+        boxWidth: 12,
+        padding: 10,
+        font: { size: 11, weight: '700' }
+    };
+    const axisTickFont = { size: 10, weight: '600' };
     const commonOptions = {
         responsive: true,
         maintainAspectRatio: true,
         plugins: {
-            legend: { display: true, position: 'top', align: 'center', labels: { color: '#333', boxWidth: 12, padding: 8, font: { size: 10 } } },
+            legend: { display: true, position: 'top', align: 'center', labels: legendLabelStyle },
             datalabels: {
                 display: true,
                 color: '#333',
@@ -1073,8 +1080,8 @@ function initializeCharts() {
             }
         },
         scales: {
-            y: { beginAtZero: true, grid: { color: 'rgba(0,0,0,0.05)' }, ticks: { color: '#666' } },
-            x: { grid: { display: false }, ticks: { color: '#666' } }
+            y: { beginAtZero: true, grid: { color: 'rgba(0,0,0,0.05)' }, ticks: { color: '#374151', font: axisTickFont } },
+            x: { grid: { display: false }, ticks: { color: '#374151', font: axisTickFont } }
         }
     };
     
@@ -1319,18 +1326,18 @@ function initializeSegmentCharts() {
                         text: 'Total Revenue by Segment',
                         position: 'top',
                         align: 'start',
-                        font: { size: 13, weight: 'bold' },
-                        color: '#333',
+                        font: { size: 13, weight: '700' },
+                        color: '#111827',
                         padding: { top: 5, bottom: 5 }
                     },
                     legend: { 
                         position: 'top', 
                         align: 'end', 
                         labels: { 
-                            color: '#333', 
+                            color: '#111827', 
                             boxWidth: 12, 
                             padding: 10, 
-                            font: { size: 11, weight: '500' },
+                            font: { size: 11, weight: '700' },
                             usePointStyle: false
                         }
                     }, 
@@ -1344,8 +1351,8 @@ function initializeSegmentCharts() {
                     }
                 },
                 scales: {
-                    x: { stacked: true, ticks: { color: '#666' }, grid: { color: 'rgba(0,0,0,0.05)' } },
-                    y: { stacked: true, min: 0, max: 17, ticks: { color: '#666', callback: v => '$' + v + 'B' }, grid: { color: 'rgba(0,0,0,0.05)' } }
+                    x: { stacked: true, ticks: { color: '#374151', font: { size: 10, weight: '600' } }, grid: { color: 'rgba(0,0,0,0.05)' } },
+                    y: { stacked: true, min: 0, max: 17, ticks: { color: '#374151', font: { size: 10, weight: '600' }, callback: v => '$' + v + 'B' }, grid: { color: 'rgba(0,0,0,0.05)' } }
                 }
             }
         });
@@ -1378,7 +1385,7 @@ function initializeSegmentCharts() {
             options: {
                 responsive: true,
                 plugins: { 
-                    legend: { display: true, position: 'top', labels: { color: '#333', boxWidth: 12 } }, 
+                    legend: { display: true, position: 'top', labels: { color: '#111827', boxWidth: 12, padding: 8, font: { size: 11, weight: '700' } } }, 
                     datalabels: { 
                         anchor: 'end', 
                         align: 'top', 
@@ -1389,8 +1396,8 @@ function initializeSegmentCharts() {
                     } 
                 },
                 scales: { 
-                    y: { min: 0, max: 8, ticks: { color: '#666' }, grid: { color: 'rgba(0,0,0,0.05)' } }, 
-                    x: { ticks: { color: '#666' }, grid: { color: 'rgba(0,0,0,0.05)' } } 
+                    y: { min: 0, max: 8, ticks: { color: '#374151', font: { size: 10, weight: '600' } }, grid: { color: 'rgba(0,0,0,0.05)' } }, 
+                    x: { ticks: { color: '#374151', font: { size: 10, weight: '600' } }, grid: { color: 'rgba(0,0,0,0.05)' } } 
                 }
             }
         });
@@ -1420,7 +1427,7 @@ function initializeSegmentCharts() {
             options: {
                 responsive: true,
                 plugins: { 
-                    legend: { display: true, position: 'top', labels: { color: '#333', boxWidth: 12 } }, 
+                    legend: { display: true, position: 'top', labels: { color: '#111827', boxWidth: 12, padding: 8, font: { size: 11, weight: '700' } } }, 
                     datalabels: { 
                         anchor: 'end', 
                         align: 'top', 
@@ -1431,8 +1438,8 @@ function initializeSegmentCharts() {
                     } 
                 },
                 scales: { 
-                    y: { min: 0, max: 10, ticks: { color: '#666' }, grid: { color: 'rgba(0,0,0,0.05)' } }, 
-                    x: { ticks: { color: '#666' }, grid: { color: 'rgba(0,0,0,0.05)' } } 
+                    y: { min: 0, max: 10, ticks: { color: '#374151', font: { size: 10, weight: '600' } }, grid: { color: 'rgba(0,0,0,0.05)' } }, 
+                    x: { ticks: { color: '#374151', font: { size: 10, weight: '600' } }, grid: { color: 'rgba(0,0,0,0.05)' } } 
                 }
             }
         });
@@ -1463,7 +1470,7 @@ function initializeSegmentCharts() {
             options: {
                 responsive: true,
                 plugins: { 
-                    legend: { display: true, position: 'top', labels: { color: '#333', boxWidth: 12 } }, 
+                    legend: { display: true, position: 'top', labels: { color: '#111827', boxWidth: 12, padding: 8, font: { size: 11, weight: '700' } } }, 
                     datalabels: { 
                         anchor: 'end', 
                         align: 'top', 
@@ -1474,8 +1481,8 @@ function initializeSegmentCharts() {
                     } 
                 },
                 scales: { 
-                    y: { min: 0, max: 2, ticks: { color: '#666' }, grid: { color: 'rgba(0,0,0,0.05)' } }, 
-                    x: { ticks: { color: '#666' }, grid: { color: 'rgba(0,0,0,0.05)' } } 
+                    y: { min: 0, max: 2, ticks: { color: '#374151', font: { size: 10, weight: '600' } }, grid: { color: 'rgba(0,0,0,0.05)' } }, 
+                    x: { ticks: { color: '#374151', font: { size: 10, weight: '600' } }, grid: { color: 'rgba(0,0,0,0.05)' } } 
                 }
             }
         });
