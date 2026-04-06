@@ -11,6 +11,41 @@
     letter-spacing: -0.02em;
 }
 
+/* Q1 Outlook KPI strip — tighter vertical rhythm */
+.outlook-kpi-compact .section-heading-yearly {
+    font-size: 1.05em;
+    margin: 0 0 6px 0;
+    padding-bottom: 6px;
+}
+
+.outlook-kpi-compact .kpi-section-quarterly {
+    gap: 6px;
+    margin-bottom: 12px;
+}
+
+.outlook-kpi-compact .kpi-card {
+    padding: 5px 8px 4px;
+    border-top-width: 2px;
+}
+
+.outlook-kpi-compact .kpi-label {
+    margin-bottom: 2px;
+    font-size: 0.64em;
+    letter-spacing: 0.03em;
+    line-height: 1.15;
+}
+
+.outlook-kpi-compact .kpi-value {
+    font-size: 1.22em !important;
+    margin-bottom: 1px;
+    line-height: 1.15;
+}
+
+.outlook-kpi-compact .kpi-unit {
+    font-size: 0.58em;
+    line-height: 1.15;
+}
+
 /* Quarterly filter containers - Compact */
 .quarterly-filter {
     padding: 1px 4px;
@@ -188,7 +223,7 @@
     background-color: rgba(33, 150, 243, 0.7);
 }
 
-/* Outlook KPI values slightly larger than yearly default */
+/* Outlook KPI values slightly larger than yearly default (outlook wrapper overrides for compact) */
 .kpi-section-quarterly .kpi-value {
     font-size: 1.45em;
 }
@@ -212,6 +247,14 @@
 }
 
 @media (max-width: 768px) {
+    .outlook-kpi-compact .kpi-section-quarterly {
+        gap: 6px;
+    }
+
+    .outlook-kpi-compact .kpi-value {
+        font-size: 1.08em !important;
+    }
+
     .slider-row-single {
         gap: 6px;
     }
