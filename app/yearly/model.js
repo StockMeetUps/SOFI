@@ -8,7 +8,23 @@ function updateSliderFill(slider) {
     const max = parseFloat(slider.max);
     const value = parseFloat(slider.value);
     const percentage = ((value - min) / (max - min)) * 100;
+    if (slider.id === 'projectUntilYear') {
+        slider.style.setProperty('--project-until-fill', `${percentage}%`);
+        updateProjectUntilActiveStep(parseInt(slider.value, 10));
+        return;
+    }
     slider.style.background = `linear-gradient(to right, #00A5E5 0%, #00A5E5 ${percentage}%, #e0e0e0 ${percentage}%, #e0e0e0 100%)`;
+}
+
+function updateProjectUntilActiveStep(year) {
+    document.querySelectorAll('.project-until-year-step').forEach(function(el) {
+        var y = parseInt(el.getAttribute('data-year'), 10);
+        el.classList.toggle('is-active', y === year);
+    });
+    document.querySelectorAll('.project-until-rail-dot').forEach(function(el) {
+        var y = parseInt(el.getAttribute('data-year'), 10);
+        el.classList.toggle('is-active', y === year);
+    });
 }
 
 // Initialize all slider fills on page load

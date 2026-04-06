@@ -241,9 +241,24 @@
                     <p class="project-until-hint">Charts and KPIs use data through this year (2026–2030).</p>
                     <div class="project-until-row">
                         <span class="slider-value" id="projectUntilYearValue">2030</span>
-                        <input type="range" id="projectUntilYear" class="project-until-slider" min="2026" max="2030" step="1" value="2030" aria-label="Project trends until year">
+                        <div class="project-until-input-shell">
+                            <input type="range" id="projectUntilYear" class="project-until-slider" min="2026" max="2030" step="1" value="2030" aria-label="Project trends until year">
+                            <div class="project-until-dot-rail" aria-hidden="true">
+                                <span class="project-until-rail-dot" data-year="2026"></span>
+                                <span class="project-until-rail-dot" data-year="2027"></span>
+                                <span class="project-until-rail-dot" data-year="2028"></span>
+                                <span class="project-until-rail-dot" data-year="2029"></span>
+                                <span class="project-until-rail-dot" data-year="2030"></span>
+                            </div>
+                            <div class="project-until-year-legend" aria-hidden="true">
+                                <div class="project-until-year-step" data-year="2026"><span class="project-until-legend-dot"></span><span class="project-until-step-year">2026</span></div>
+                                <div class="project-until-year-step" data-year="2027"><span class="project-until-legend-dot"></span><span class="project-until-step-year">2027</span></div>
+                                <div class="project-until-year-step" data-year="2028"><span class="project-until-legend-dot"></span><span class="project-until-step-year">2028</span></div>
+                                <div class="project-until-year-step" data-year="2029"><span class="project-until-legend-dot"></span><span class="project-until-step-year">2029</span></div>
+                                <div class="project-until-year-step is-active" data-year="2030"><span class="project-until-legend-dot"></span><span class="project-until-step-year">2030</span></div>
+                            </div>
+                        </div>
                     </div>
-                    <div class="project-until-ticks" aria-hidden="true">2026 · 2027 · 2028 · 2029 · 2030</div>
                 </div>
                 <div id="yearControlsContainer"></div>
             </div>
@@ -278,6 +293,6 @@
 
     </div>
 
-    <script src="model.js?v=20260408"></script>
+    <script src="model.js?v=20260409"></script>
 </body>
 </html>

@@ -251,27 +251,147 @@ body {
 
 .project-until-row {
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     gap: 6px;
 }
 
 .project-until-row .slider-value {
     min-width: 36px;
+    padding-top: 2px;
+}
+
+/* Align discrete stops with 14px thumb: inset matches thumb half-width */
+.project-until-input-shell {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    /* padding matches ::-webkit-slider-thumb width / 2 for stop alignment */
+    --project-until-thumb-inset: 7px;
+}
+
+.project-until-dot-rail {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 var(--project-until-thumb-inset);
+    margin-top: -3px;
+    pointer-events: none;
+}
+
+.project-until-rail-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #fff;
+    border: 2px dotted #7a8794;
+    box-sizing: border-box;
+    flex-shrink: 0;
+    transition: border-color 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
+}
+
+.project-until-rail-dot.is-active {
+    border-style: solid;
+    border-color: #00a5e5;
+    background: rgba(0, 165, 229, 0.2);
+    box-shadow: 0 0 0 1px rgba(0, 165, 229, 0.35);
+}
+
+.project-until-year-legend {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: 0 var(--project-until-thumb-inset);
+    margin-top: 2px;
+    gap: 2px;
+}
+
+.project-until-year-step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    flex: 1;
+    min-width: 0;
+}
+
+.project-until-legend-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #fff;
+    border: 2px dotted #5c6b78;
+    box-sizing: border-box;
+    transition: border-color 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
+}
+
+.project-until-step-year {
+    font-size: 0.62em;
+    font-weight: 600;
+    color: #6a7680;
+    line-height: 1.1;
+    text-align: center;
+    transition: color 0.15s ease;
+}
+
+.project-until-year-step.is-active .project-until-legend-dot {
+    border-style: solid;
+    border-width: 2px;
+    border-color: #00a5e5;
+    background: #00a5e5;
+    box-shadow: 0 0 0 2px rgba(0, 165, 229, 0.25);
+}
+
+.project-until-year-step.is-active .project-until-step-year {
+    color: #00a5e5;
 }
 
 .project-until-slider {
-    flex: 1;
+    width: 100%;
     height: 6px;
     border-radius: 3px;
-    accent-color: #00a5e5;
+    outline: none;
+    -webkit-appearance: none;
+    cursor: pointer;
+    --project-until-fill: 100%;
+    background: linear-gradient(
+        to right,
+        #00A5E5 0%,
+        #00A5E5 var(--project-until-fill),
+        #e0e0e0 var(--project-until-fill),
+        #e0e0e0 100%
+    );
 }
 
-.project-until-ticks {
-    font-size: 0.65em;
-    color: #888;
-    text-align: center;
-    margin-top: 4px;
-    letter-spacing: 0.02em;
+.project-until-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: #00A5E5;
+    cursor: pointer;
+    border: 2px solid #fff;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.28);
+}
+
+.project-until-slider::-moz-range-thumb {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: #00A5E5;
+    cursor: pointer;
+    border: 2px solid #fff;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.28);
+}
+
+/* Let the element background gradient show (same as WebKit fill) */
+.project-until-slider::-moz-range-progress {
+    background: transparent;
+}
+
+.project-until-slider::-moz-range-track {
+    background: transparent;
 }
 
 /* Slider Controls */
