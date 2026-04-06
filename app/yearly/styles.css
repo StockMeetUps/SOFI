@@ -103,16 +103,11 @@ body {
     color: #374151;
 }
 
-.header-intro-lead,
-.header-intro-context {
+.header-intro-lead {
     font-size: 0.86em;
     line-height: 1.6;
-    margin: 0 0 10px 0;
+    margin: 0 0 8px 0;
     max-width: none;
-}
-
-.header-intro-context {
-    margin-bottom: 10px;
 }
 
 .header-intro strong {
