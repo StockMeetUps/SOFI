@@ -149,7 +149,7 @@ const Q4_2025_REF = {
 // - Lending: +0.6% QoQ, +22% YoY
 // - Financial Services: +6.3% QoQ, +60% YoY (fastest growing)
 // - Tech Platform: -1.6% QoQ, +17% YoY
-// - Members: ~8% QoQ growth momentum continuing
+// - Members: 1.2M net new in Q1 2026 (14.9M total vs Q4 FY25 13.7M)
 // - Margins: Higher investment cycle (net margin 17.0% → 15.9%)
 
 const Q1_2026_DEFAULTS = {
@@ -169,7 +169,7 @@ const Q1_2026_DEFAULTS = {
     ebitda: 340,
     eps: 15,               // cents (192M / 1.26B shares = 15.2¢)
     // Operational
-    members: 14.8,         // +8.0% QoQ from Q4 13.7M
+    members: 14.9,         // +1.2M net new vs Q4 FY25 13.7M
     products: 22.0,        // +8.9% QoQ from Q4 20.2M
     // Margins
     netMargin: 17.2,
@@ -365,10 +365,12 @@ function updateSliderImpact(config) {
         const smPct = (salesMarketing / netRevenue * 100).toFixed(1);
         impactHTML = `<span class="impact-item">S&M %: <strong>${smPct}%</strong> of Rev</span>`;
     } else if (config.id === 'members') {
-        const yoyGrowth = ((members - Q1_2025_REF.netRevenue / 772 * 10.9) / (Q1_2025_REF.netRevenue / 772 * 10.9) * 100).toFixed(1);
         const q1Members = 10.9; // Q1 FY25
+        const q4Members = QUARTERLY_ACTUALS.Q4.members;
         const yoy = ((members - q1Members) / q1Members * 100).toFixed(1);
-        impactHTML = `<span class="impact-item">YoY: <strong>+${yoy}%</strong> vs Q1 FY25</span>`;
+        const netNewVsQ4 = (members - q4Members).toFixed(1);
+        impactHTML = `<span class="impact-item">YoY: <strong>+${yoy}%</strong> vs Q1 FY25</span>
+                      <span class="impact-item">Net new vs Q4: <strong>+${netNewVsQ4}M</strong></span>`;
     } else if (config.id === 'products') {
         const q1Products = 15.9; // Q1 FY25
         const products = parseFloat(document.getElementById('productsSlider').value);
