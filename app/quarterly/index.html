@@ -97,6 +97,21 @@
                 <section class="charts-section">
                     <div class="trend-charts-grid">
                         <div class="chart-container">
+                            <h3>SOFI: EPS Trend</h3>
+                            <canvas id="epsChart"></canvas>
+                            <p class="chart-note-bottom">Q4 FY25 includes one-time 2¢ EPS from $CHYM termination fee</p>
+                        </div>
+                        <div class="chart-container">
+                            <h3>SOFI: Rule of 40</h3>
+                            <p class="chart-note">YoY revenue growth % + EBITDA margin % (common benchmark target ≥40)</p>
+                            <canvas id="ruleOf40Chart"></canvas>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="charts-section">
+                    <div class="trend-charts-grid">
+                        <div class="chart-container">
                             <h3>SOFI: Revenue Segments</h3>
                             <canvas id="segmentChart"></canvas>
                         </div>
@@ -116,23 +131,8 @@
                             <canvas id="segmentMixChart"></canvas>
                         </div>
                         <div class="chart-container">
-                            <h3>SOFI: Rule of 40</h3>
-                            <p class="chart-note">YoY revenue growth % + EBITDA margin % (common benchmark target ≥40)</p>
-                            <canvas id="ruleOf40Chart"></canvas>
-                        </div>
-                    </div>
-                </section>
-
-                <section class="charts-section">
-                    <div class="trend-charts-grid">
-                        <div class="chart-container">
                             <h3>SOFI: Revenue Segment Growth QoQ %</h3>
                             <canvas id="segmentGrowthChart"></canvas>
-                        </div>
-                        <div class="chart-container">
-                            <h3>SOFI: EPS Trend</h3>
-                            <canvas id="epsChart"></canvas>
-                            <p class="chart-note-bottom">Q4 FY25 includes one-time 2¢ EPS from $CHYM termination fee</p>
                         </div>
                     </div>
                 </section>
@@ -210,6 +210,6 @@
         </section>
     </div>
 
-    <script src="quarterly-model.js?v=20260409"></script>
+    <script src="quarterly-model.js?v=20260410"></script>
 </body>
 </html>
