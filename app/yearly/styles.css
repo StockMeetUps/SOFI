@@ -121,32 +121,10 @@ body {
 }
 
 .header-intro-catalysts {
-    margin: 0;
-}
-
-.header-intro-catalysts-title {
-    display: block;
-    font-size: 0.88em;
-    font-weight: 700;
-    color: #111827;
-    margin-bottom: 6px;
-}
-
-.header-intro-list {
-    margin: 0;
-    padding: 0 0 0 1.15em;
     font-size: 0.86em;
-    line-height: 1.5;
+    line-height: 1.6;
+    margin: 0;
     color: #374151;
-}
-
-.header-intro-list li {
-    margin-bottom: 4px;
-    padding-left: 2px;
-}
-
-.header-intro-list li:last-child {
-    margin-bottom: 0;
 }
 
 /* KPI Cards Section */
