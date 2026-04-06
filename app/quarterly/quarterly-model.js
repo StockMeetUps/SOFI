@@ -149,14 +149,15 @@ const Q4_2025_REF = {
 // - Lending: ~flat QoQ vs Q4 (offset to hold total rev)
 // - Financial Services: lower QoQ% vs prior draft (offset to hold total rev)
 // - Tech Platform: +2% QoQ vs Q4 ($122M → $124M); lending/FS adjusted so total rev unchanged
+// - Segment split $502M / $124M / $488M: lending QoQ ~+1% (chart), FS ~+7% QoQ, tech +2% rounded
 // - Members: 1.2M net new in Q1 2026 (14.9M total vs Q4 FY25 13.7M)
 // - Margins: Higher investment cycle (net margin 17.0% → 15.9%)
 
 const Q1_2026_DEFAULTS = {
-    // Revenue segments (same $1,114M total as before: 500+124+490)
-    lending: 500,          // vs Q4 $499M; −$2M vs prior default to offset tech
-    techPlatform: 124,     // +2% QoQ vs Q4 $122M (slider impact rounds QoQ to +2%)
-    financialServices: 490, // vs Q4 $457M; −$2M vs prior default to offset tech
+    // Revenue segments ($1,114M total: 502+124+488) — QoQ chart: lending ~+1%, tech +2%, FS ~+7%
+    lending: 502,          // vs Q4 $499M (~+1% QoQ displayed)
+    techPlatform: 124,     // +2% QoQ vs Q4 $122M (rounded on chart)
+    financialServices: 488, // vs Q4 $457M (~+7% QoQ displayed)
     netRevenue: 1114,      // unchanged total vs Q4 $1,025M (+8.7% QoQ overall)
     // Expenses (higher investment in growth)
     salesMarketing: 345,   // +15.0% QoQ from Q4 $300M
