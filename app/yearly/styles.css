@@ -108,11 +108,15 @@ body {
     line-height: 1.6;
     margin: 0;
     max-width: none;
+    font-weight: 700;
+    font-style: italic;
+    color: #374151;
 }
 
 .header-intro strong {
     color: #111827;
     font-weight: 700;
+    font-style: italic;
 }
 
 /* KPI Cards Section */
