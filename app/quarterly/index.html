@@ -111,6 +111,21 @@
                 <section class="charts-section">
                     <div class="trend-charts-grid">
                         <div class="chart-container">
+                            <h3>SOFI: Segment Mix (% of Segments)</h3>
+                            <p class="chart-note">Each bar stacks to 100% of Lending + Tech + Financial Services</p>
+                            <canvas id="segmentMixChart"></canvas>
+                        </div>
+                        <div class="chart-container">
+                            <h3>SOFI: Rule of 40</h3>
+                            <p class="chart-note">YoY revenue growth % + EBITDA margin % (common benchmark target ≥40)</p>
+                            <canvas id="ruleOf40Chart"></canvas>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="charts-section">
+                    <div class="trend-charts-grid">
+                        <div class="chart-container">
                             <h3>SOFI: Revenue Segment Growth QoQ %</h3>
                             <canvas id="segmentGrowthChart"></canvas>
                         </div>
@@ -195,6 +210,6 @@
         </section>
     </div>
 
-    <script src="quarterly-model.js?v=20260408"></script>
+    <script src="quarterly-model.js?v=20260409"></script>
 </body>
 </html>

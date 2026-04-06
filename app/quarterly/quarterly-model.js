@@ -141,6 +141,15 @@ const Q4_2025_REF = {
     netRevenue: 1025
 };
 
+// Prior-year net revenue (same quarter) for Rule of 40 YoY: FY24 Q1–Q4, then Q1 FY25 for Q1 FY26
+const PRIOR_YEAR_NET_REVENUE_Q = [
+    FY2024_QUARTERS.Q1.netRevenue,
+    FY2024_QUARTERS.Q2.netRevenue,
+    FY2024_QUARTERS.Q3.netRevenue,
+    FY2024_QUARTERS.Q4.netRevenue,
+    QUARTERLY_ACTUALS.Q1.netRevenue
+];
+
 // ============================================
 // Q1 2026 PROJECTION DEFAULTS
 // ============================================
@@ -184,7 +193,7 @@ let Q1_2026_CURRENT = { ...Q1_2026_DEFAULTS };
 // ============================================
 // CHART INSTANCES
 // ============================================
-let revenueChart, netIncomeChart, segmentChart, epsChart, membersChart, productsChart, expensesChart, marginChart, ebitdaChart, segmentGrowthChart;
+let revenueChart, netIncomeChart, segmentChart, segmentMixChart, epsChart, membersChart, productsChart, expensesChart, marginChart, ebitdaChart, segmentGrowthChart, ruleOf40Chart;
 
 // ============================================
 // INITIALIZATION
@@ -549,6 +558,40 @@ function updateAllCharts(data) {
         segmentChart.data.datasets[1].data = data.map(d => d.techPlatform);
         segmentChart.data.datasets[2].data = data.map(d => d.financialServices);
         segmentChart.update();
+    }
+    
+    // Segment Mix (% of revenue, 100% stacked)
+    if (segmentMixChart) {
+        segmentMixChart.data.labels = quarters;
+        const totals = data.map(d => d.lending + d.techPlatform + d.financialServices);
+        segmentMixChart.data.datasets[0].data = data.map((d, i) =>
+            totals[i] > 0 ? (d.lending / totals[i]) * 100 : 0
+        );
+        segmentMixChart.data.datasets[1].data = data.map((d, i) =>
+            totals[i] > 0 ? (d.techPlatform / totals[i]) * 100 : 0
+        );
+        segmentMixChart.data.datasets[2].data = data.map((d, i) =>
+            totals[i] > 0 ? (d.financialServices / totals[i]) * 100 : 0
+        );
+        segmentMixChart.update();
+    }
+    
+    // Rule of 40: YoY revenue growth % + EBITDA margin %
+    if (ruleOf40Chart) {
+        ruleOf40Chart.data.labels = quarters;
+        const yoyRev = data.map((d, i) =>
+            PRIOR_YEAR_NET_REVENUE_Q[i] > 0
+                ? ((d.netRevenue - PRIOR_YEAR_NET_REVENUE_Q[i]) / PRIOR_YEAR_NET_REVENUE_Q[i]) * 100
+                : 0
+        );
+        const ebitdaMargin = data.map(d =>
+            d.netRevenue > 0 ? (d.ebitda / d.netRevenue) * 100 : 0
+        );
+        const ruleScore = yoyRev.map((y, i) => y + ebitdaMargin[i]);
+        ruleOf40Chart.data.datasets[0].data = ruleScore;
+        ruleOf40Chart.data.datasets[1].data = ruleScore.map(() => 40);
+        ruleOf40Chart.$rule40Meta = { yoy: yoyRev, ebitdaM: ebitdaMargin };
+        ruleOf40Chart.update();
     }
     
     // EPS Chart
@@ -1020,6 +1063,127 @@ function initializeCharts() {
         });
     }
     
+    // Segment Mix — % of revenue (100% stacked)
+    const segmentMixCtx = document.getElementById('segmentMixChart');
+    if (segmentMixCtx) {
+        segmentMixChart = new Chart(segmentMixCtx.getContext('2d'), {
+            type: 'bar',
+            data: {
+                labels: [],
+                datasets: [
+                    { label: 'Lending', data: [], backgroundColor: 'rgba(0, 165, 229, 0.85)', borderColor: '#00A5E5', borderWidth: 1 },
+                    { label: 'Tech Platform', data: [], backgroundColor: 'rgba(156, 39, 176, 0.75)', borderColor: '#9c27b0', borderWidth: 1 },
+                    { label: 'Financial Services', data: [], backgroundColor: 'rgba(76, 175, 80, 0.75)', borderColor: '#4caf50', borderWidth: 1 }
+                ]
+            },
+            options: {
+                ...commonOptions,
+                scales: {
+                    ...commonOptions.scales,
+                    x: { ...commonOptions.scales.x, stacked: true },
+                    y: {
+                        ...commonOptions.scales.y,
+                        stacked: true,
+                        min: 0,
+                        max: 100,
+                        ticks: { ...commonOptions.scales.y.ticks, callback: (v) => v + '%' }
+                    }
+                },
+                plugins: {
+                    ...commonOptions.plugins,
+                    datalabels: {
+                        ...commonOptions.plugins.datalabels,
+                        anchor: 'center',
+                        align: 'center',
+                        font: CHART_TYPOGRAPHY.dataLabelCompact,
+                        formatter: (v) => (v >= 6 ? v.toFixed(0) + '%' : '')
+                    }
+                }
+            }
+        });
+    }
+    
+    // Rule of 40 — YoY revenue growth % + EBITDA margin %
+    const ruleOf40Ctx = document.getElementById('ruleOf40Chart');
+    if (ruleOf40Ctx) {
+        ruleOf40Chart = new Chart(ruleOf40Ctx.getContext('2d'), {
+            type: 'line',
+            data: {
+                labels: [],
+                datasets: [
+                    {
+                        label: 'Rule of 40',
+                        data: [],
+                        borderColor: '#00A5E5',
+                        backgroundColor: 'rgba(0, 165, 229, 0.12)',
+                        tension: 0.35,
+                        fill: true,
+                        borderWidth: 3,
+                        pointRadius: 6,
+                        pointBackgroundColor: '#00A5E5',
+                        pointBorderColor: '#ffffff',
+                        pointBorderWidth: 2,
+                        pointHoverRadius: 8,
+                        order: 0
+                    },
+                    {
+                        label: 'Benchmark (40)',
+                        data: [],
+                        borderColor: '#9ca3af',
+                        backgroundColor: 'transparent',
+                        borderDash: [6, 4],
+                        borderWidth: 2,
+                        fill: false,
+                        pointRadius: 0,
+                        pointHoverRadius: 0,
+                        tension: 0,
+                        order: 1
+                    }
+                ]
+            },
+            options: {
+                ...commonOptions,
+                plugins: {
+                    ...commonOptions.plugins,
+                    datalabels: {
+                        ...commonOptions.plugins.datalabels,
+                        display: (ctx) => ctx.datasetIndex === 0,
+                        formatter: (v) => (v != null && !Number.isNaN(v) ? Number(v).toFixed(0) : '')
+                    },
+                    tooltip: {
+                        ...commonOptions.plugins.tooltip,
+                        callbacks: {
+                            label: (ctx) => {
+                                if (ctx.datasetIndex === 1) return 'Benchmark: 40';
+                                const chart = ctx.chart;
+                                const meta = chart.$rule40Meta;
+                                const i = ctx.dataIndex;
+                                const y = ctx.parsed.y;
+                                if (!meta || meta.yoy[i] === undefined) {
+                                    return 'Rule of 40: ' + (y != null ? y.toFixed(1) : '');
+                                }
+                                return [
+                                    'Rule of 40: ' + y.toFixed(1),
+                                    'YoY revenue: ' + meta.yoy[i].toFixed(1) + '%',
+                                    'EBITDA margin: ' + meta.ebitdaM[i].toFixed(1) + '%'
+                                ];
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    ...commonOptions.scales,
+                    y: {
+                        ...commonOptions.scales.y,
+                        beginAtZero: true,
+                        suggestedMax: 80,
+                        ticks: { ...commonOptions.scales.y.ticks, callback: (v) => v }
+                    }
+                }
+            }
+        });
+    }
+    
     // EPS Chart
     const epsCtx = document.getElementById('epsChart');
     if (epsCtx) {
@@ -1292,5 +1456,5 @@ function initializeCharts() {
         });
     }
     
-    console.log('All quarterly charts initialized (5 quarters: Q1-Q4 FY25 + Q1 FY26)');
+    console.log('Quarterly charts initialized (incl. Segment Mix & Rule of 40; Q1–Q4 FY25 + Q1 FY26)');
 }
