@@ -1188,7 +1188,7 @@ function initializeCharts() {
             },
             options: {
                 ...commonOptions,
-                aspectRatio: 2.75,
+                aspectRatio: 1.75,
                 plugins: {
                     ...commonOptions.plugins,
                     legend: {
