@@ -1195,7 +1195,31 @@ function initializeCharts() {
                         display: true,
                         position: 'top',
                         align: 'center',
-                        labels: legendLabelStyle
+                        onClick: (e, legendItem, legend) => {
+                            if (legendItem.datasetIndex == null || legendItem.datasetIndex < 0) return;
+                            const def = Chart.defaults.plugins.legend.onClick;
+                            if (typeof def === 'function') def.call(legend, e, legendItem, legend);
+                        },
+                        labels: {
+                            color: legendLabelStyle.color,
+                            boxWidth: legendLabelStyle.boxWidth,
+                            padding: legendLabelStyle.padding,
+                            font: legendLabelStyle.font,
+                            generateLabels(chart) {
+                                const gen = Chart.defaults.plugins.legend.labels.generateLabels;
+                                const items = gen.call(this, chart);
+                                items.push({
+                                    text: 'Q1 2026 (Projected)',
+                                    fillStyle: 'transparent',
+                                    strokeStyle: 'transparent',
+                                    lineWidth: 0,
+                                    hidden: false,
+                                    datasetIndex: -1,
+                                    index: -1
+                                });
+                                return items;
+                            }
+                        }
                     },
                     datalabels: {
                         clip: false
