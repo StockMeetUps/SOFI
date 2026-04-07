@@ -147,7 +147,7 @@ const RULE_OF_40_LABELS = [
     'Q1 23', 'Q2 23', 'Q3 23', 'Q4 23',
     'Q1 24', 'Q2 24', 'Q3 24', 'Q4 24',
     'Q1 25', 'Q2 25', 'Q3 25', 'Q4 25',
-    'Q1 26'
+    'Q1 2026 (Projected)'
 ];
 const RULE_OF_40_ADJ_REV_GROWTH_HIST = [
     54, 49, 50, 51, 58, 43, 37, 27, 34, 26, 22, 30, 24, 33, 44, 38, 37
@@ -1195,31 +1195,7 @@ function initializeCharts() {
                         display: true,
                         position: 'top',
                         align: 'center',
-                        onClick: (e, legendItem, legend) => {
-                            if (legendItem.datasetIndex == null || legendItem.datasetIndex < 0) return;
-                            const def = Chart.defaults.plugins.legend.onClick;
-                            if (typeof def === 'function') def.call(legend, e, legendItem, legend);
-                        },
-                        labels: {
-                            color: legendLabelStyle.color,
-                            boxWidth: legendLabelStyle.boxWidth,
-                            padding: legendLabelStyle.padding,
-                            font: legendLabelStyle.font,
-                            generateLabels(chart) {
-                                const gen = Chart.defaults.plugins.legend.labels.generateLabels;
-                                const items = gen.call(this, chart);
-                                items.push({
-                                    text: 'Q1 2026 (Projected)',
-                                    fillStyle: 'transparent',
-                                    strokeStyle: 'transparent',
-                                    lineWidth: 0,
-                                    hidden: false,
-                                    datasetIndex: -1,
-                                    index: -1
-                                });
-                                return items;
-                            }
-                        }
+                        labels: legendLabelStyle
                     },
                     datalabels: {
                         clip: false

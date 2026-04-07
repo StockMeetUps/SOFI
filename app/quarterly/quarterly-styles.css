@@ -324,6 +324,11 @@
     text-align: center;
 }
 
+/* Rule of 40 definition: black (other chart notes stay orange) */
+.chart-container:has(#ruleOf40Chart) .chart-note {
+    color: #000000;
+}
+
 .chart-note-bottom {
     font-size: 0.7em;
     color: #ff9800;
