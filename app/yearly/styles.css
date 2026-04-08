@@ -210,8 +210,20 @@ body {
 }
 
 .chart-card canvas {
-    max-height: 175px;
+    max-height: 231px;
     width: 100% !important;
+}
+
+/* Rule of 40 (yearly): definition under title */
+.chart-card .yearly-rof-note {
+    font-size: 0.65em;
+    color: #111827;
+    font-style: italic;
+    font-weight: 600;
+    margin: -2px 0 6px 0;
+    padding: 0;
+    text-align: center;
+    line-height: 1.35;
 }
 
 /* Sliders Panel */
@@ -726,7 +738,7 @@ tbody tr:hover td {
     }
 
     .chart-card canvas {
-        max-height: 188px;
+        max-height: 249px;
     }
 }
 
@@ -831,7 +843,7 @@ tbody tr:hover td {
     }
     
     .chart-card canvas {
-        max-height: 210px;
+        max-height: 277px;
     }
     
     .filters-vertical-list {

@@ -43,7 +43,7 @@ function initializeAllSliderFills() {
 const BASE_DATA = {
     currentPrice: null,
     sharesOutstanding: 1.251767, // Billions
-    revenue2024: 2600.000, // In thousands (millions) - from 2024 data
+    revenue2024: 2674.859, // $M — FY2024 GAAP net revenue (aligns with HISTORICAL_DATA[2024].revenue, $ thousands)
     members2024: 10.127 // Millions (10,127,000 absolute = 10.127M)
 };
 
@@ -93,17 +93,28 @@ const HISTORICAL_DATA = {
         clientCount: 7542000,
         memberGrowthRate: 44.40
     },
+    // FY2024: GAAP net revenue & net income ($ thousands) per consolidated results (e.g. FY2024 earnings / 10-K)
     2024: {
-        revenue: 2600000,
-        netIncome: 227000,
-        eps: 0.15,
+        revenue: 2674859,
+        netIncome: 498665,
+        eps: 0.39,
         salesMarketing: 796293,
-        salesMarketingPercent: 31,
+        salesMarketingPercent: 30,
         costPerMember: 308,
         newMemberAdds: 2585000,
         clientCount: 10127000,
         memberGrowthRate: 34.27
     }
+};
+
+/** Annual adjusted net revenue & adjusted EBITDA ($ thousands) for yearly Rule of 40. 2023–2024 from SoFi adjusted consolidated disclosures; other historical years approximated from reported adjusted figures; 2025 aligned to guidance revenue with illustrative EBITDA margin. */
+const YEARLY_ROF40_ADJ = {
+    2020: { adjNetRevenue: 565532, adjEbitda: 45100 },
+    2021: { adjNetRevenue: 1010872, adjEbitda: 104000 },
+    2022: { adjNetRevenue: 1573535, adjEbitda: 193000 },
+    2023: { adjNetRevenue: 2073940, adjEbitda: 431737 },
+    2024: { adjNetRevenue: 2606170, adjEbitda: 666480 },
+    2025: { adjNetRevenue: 3600000, adjEbitda: 1080000 }
 };
 
 // Guidance Data (2025) - Official Company Guidance
@@ -132,7 +143,8 @@ const PROJECTION_DATA = {
         costPerMember: 300,
         newMemberAdds: 4460495,
         clientCount: 18088447,
-        memberGrowthRate: 32.73
+        memberGrowthRate: 32.73,
+        adjEbitda: 1338148
     },
     2027: {
         revenue: 6451787,
@@ -143,7 +155,8 @@ const PROJECTION_DATA = {
         costPerMember: 300,
         newMemberAdds: 5697461,
         clientCount: 23785908,
-        memberGrowthRate: 31.50
+        memberGrowthRate: 31.50,
+        adjEbitda: 1838759
     },
     2028: {
         revenue: 8580876,
@@ -154,7 +167,8 @@ const PROJECTION_DATA = {
         costPerMember: 275,
         newMemberAdds: 7268685,
         clientCount: 31054593,
-        memberGrowthRate: 30.58
+        memberGrowthRate: 30.58,
+        adjEbitda: 2488454
     },
     2029: {
         revenue: 11412565,
@@ -165,7 +179,8 @@ const PROJECTION_DATA = {
         costPerMember: 275,
         newMemberAdds: 9036886,
         clientCount: 40091479,
-        memberGrowthRate: 29.10
+        memberGrowthRate: 29.10,
+        adjEbitda: 3366707
     },
     2030: {
         revenue: 15064586,
@@ -176,7 +191,8 @@ const PROJECTION_DATA = {
         costPerMember: 244,
         newMemberAdds: 11466155,
         clientCount: 51557634,
-        memberGrowthRate: 28.57
+        memberGrowthRate: 28.57,
+        adjEbitda: 4519376
     }
 };
 
@@ -194,7 +210,13 @@ const MODEL_ASSUMPTIONS = {
     peRatio2028: 45,
     peRatio2029: 43,
     peRatio2030: 41,
-    sharesOutstanding2030: 1.251767
+    sharesOutstanding2030: 1.251767,
+    /** Adj. EBITDA as % of revenue for Rule of 40 (2026–2030); ties projected adj. EBITDA to model revenue. */
+    ebitdaMargin2026: 28,
+    ebitdaMargin2027: 28.5,
+    ebitdaMargin2028: 29,
+    ebitdaMargin2029: 29.5,
+    ebitdaMargin2030: 30
 };
 
 // Year-end stock prices for historical P/E calculation
@@ -208,7 +230,7 @@ const YEAR_END_PRICES = {
 
 // Chart instances
 let revenueChart, profitabilityChart, memberChart, scenarioChart, epsChart;
-let salesMarketingChart, salesMarketingPercentChart, memberAcquisitionChart, marketCapChart;
+let salesMarketingChart, salesMarketingPercentChart, memberAcquisitionChart, marketCapChart, ruleOf40YearlyChart;
 let memberGrowthChart, peRatioChart, revenueGrowthChart, netIncomeMarginChart, pegRatioChart;
 
 /** Last projection year shown in charts, KPIs, and table (2026–2030). */
@@ -310,6 +332,21 @@ function updateAllChartsWithData(projections) {
         marketCapChart.data.labels = filtered.map(i => trends.years[i].toString());
         marketCapChart.data.datasets[0].data = filtered.map(i => trends.marketCaps[i]);
         marketCapChart.update();
+    }
+    
+    if (ruleOf40YearlyChart) {
+        const rof = computeYearlyRuleOf40Data(projections, PROJECT_UNTIL_YEAR);
+        ruleOf40YearlyChart.data.labels = rof.labels;
+        ruleOf40YearlyChart.data.datasets[0].data = rof.adjGrowth;
+        ruleOf40YearlyChart.data.datasets[1].data = rof.ebitdaM;
+        ruleOf40YearlyChart.data.datasets[2].data = rof.total;
+        ruleOf40YearlyChart.$rule40YearlyMeta = {
+            adjGrowth: rof.adjGrowth,
+            ebitdaM: rof.ebitdaM,
+            total: rof.total,
+            labels: rof.labels
+        };
+        ruleOf40YearlyChart.update();
     }
     
     if (memberChart) {
@@ -581,6 +618,9 @@ function updateModelWithSliders() {
             PROJECTION_DATA[year].newMemberAdds = newMemberAdds;
             PROJECTION_DATA[year].clientCount = clientCount;
             PROJECTION_DATA[year].memberGrowthRate = memberGrowthRate;
+            const em = MODEL_ASSUMPTIONS[`ebitdaMargin${year}`];
+            const marginPct = em != null && !Number.isNaN(em) ? em : 28;
+            PROJECTION_DATA[year].adjEbitda = (revenue * marginPct) / 100;
         }
         
         const projections = calculateProjections();
@@ -597,6 +637,7 @@ function calculateProjections() {
     // Historical years (2020-2024)
     for (let year = 2020; year <= 2024; year++) {
         const data = HISTORICAL_DATA[year];
+        const rof = YEARLY_ROF40_ADJ[year];
         projections.push({
             year: year,
             revenue: data.revenue,
@@ -609,13 +650,16 @@ function calculateProjections() {
             newMemberAdds: data.newMemberAdds,
             clientCount: data.clientCount,
             memberGrowthRate: data.memberGrowthRate,
-            period: 'historical'
+            period: 'historical',
+            adjNetRevenue: rof.adjNetRevenue,
+            adjEbitda: rof.adjEbitda
         });
     }
     
     // 2025 year (now past performance)
     const data2025 = GUIDANCE_DATA[2025];
     const revenue2024 = HISTORICAL_DATA[2024].revenue;
+    const rof25 = YEARLY_ROF40_ADJ[2025];
     projections.push({
         year: 2025,
         revenue: data2025.revenue,
@@ -628,7 +672,9 @@ function calculateProjections() {
         newMemberAdds: data2025.newMemberAdds,
         clientCount: data2025.clientCount,
         memberGrowthRate: data2025.memberGrowthRate,
-        period: 'historical'
+        period: 'historical',
+        adjNetRevenue: rof25.adjNetRevenue,
+        adjEbitda: rof25.adjEbitda
     });
     
     // Projection years (2026-2030)
@@ -648,11 +694,42 @@ function calculateProjections() {
             newMemberAdds: projection.newMemberAdds,
             clientCount: projection.clientCount,
             memberGrowthRate: projection.memberGrowthRate,
-            period: 'projection'
+            period: 'projection',
+            adjNetRevenue: projection.revenue,
+            adjEbitda: projection.adjEbitda
         });
     }
     
     return projections;
+}
+
+/** YoY adjusted net revenue growth % + adj. EBITDA margin % for yearly Rule of 40 chart (2021–terminal). X-axis: 2026+ labeled "(Proj)". */
+function computeYearlyRuleOf40Data(projections, projectUntilYear) {
+    const byYear = {};
+    projections.forEach(p => {
+        byYear[p.year] = p;
+    });
+    const slice = projections.filter(p => p.year >= 2021 && p.year <= projectUntilYear);
+    const labels = [];
+    const adjGrowth = [];
+    const ebitdaM = [];
+    const total = [];
+    for (const p of slice) {
+        const prev = byYear[p.year - 1];
+        const adjR = p.adjNetRevenue;
+        const adjE = p.adjEbitda;
+        const prevR = prev && prev.adjNetRevenue;
+        let g = 0;
+        if (prevR != null && adjR != null && prevR > 0) {
+            g = ((adjR - prevR) / prevR) * 100;
+        }
+        const m = adjR && adjE && adjR > 0 ? (adjE / adjR) * 100 : 0;
+        labels.push(p.year >= 2026 ? `${p.year} (Proj)` : String(p.year));
+        adjGrowth.push(g);
+        ebitdaM.push(m);
+        total.push(g + m);
+    }
+    return { labels, adjGrowth, ebitdaM, total };
 }
 
 // Calculate P/E valuation (uses terminal year in `projections` and matching P/E / share count)
@@ -1139,6 +1216,140 @@ function initializeCharts() {
             type: 'line',
             data: { labels: [], datasets: [{ label: 'Market Cap ($B)', data: [], borderColor: COLORS.cyan, backgroundColor: 'rgba(0,165,229,0.1)', fill: true, tension: 0.4 }] },
             options: { ...commonOptions, plugins: { ...commonOptions.plugins, datalabels: { ...commonOptions.plugins.datalabels, formatter: v => Math.round(v) + 'B' } } }
+        });
+    }
+    
+    // Rule of 40 — adj. net revenue YoY growth % + adj. EBITDA margin % (stacked) + line (sum); 2021–terminal; 2026+ x-labels (Proj)
+    const ruleOf40YearlyCtx = document.getElementById('ruleOf40YearlyChart');
+    if (ruleOf40YearlyCtx) {
+        ruleOf40YearlyChart = new Chart(ruleOf40YearlyCtx.getContext('2d'), {
+            type: 'bar',
+            data: {
+                labels: [],
+                datasets: [
+                    {
+                        type: 'bar',
+                        label: 'Adj. Net Revenue Growth (%)',
+                        data: [],
+                        backgroundColor: '#c8cdd4',
+                        borderColor: '#9ca3af',
+                        borderWidth: 1,
+                        stack: 'rof40',
+                        order: 1,
+                        datalabels: {
+                            display: true,
+                            color: '#111827',
+                            font: CHART_TYPOGRAPHY.dataLabelCompact,
+                            anchor: 'center',
+                            align: 'center',
+                            formatter: (v) => (v != null && v >= 4 ? Math.round(v) + '%' : '')
+                        }
+                    },
+                    {
+                        type: 'bar',
+                        label: 'Adj. EBITDA Margin (%)',
+                        data: [],
+                        backgroundColor: '#162a45',
+                        borderColor: '#0f172a',
+                        borderWidth: 1,
+                        stack: 'rof40',
+                        order: 1,
+                        datalabels: {
+                            display: true,
+                            color: '#ffffff',
+                            font: CHART_TYPOGRAPHY.dataLabelCompact,
+                            anchor: 'center',
+                            align: 'center',
+                            formatter: (v) => (v != null && v >= 4 ? Math.round(v) + '%' : '')
+                        }
+                    },
+                    {
+                        type: 'line',
+                        label: 'Rule of 40',
+                        data: [],
+                        borderColor: '#00A5E5',
+                        backgroundColor: 'rgba(0, 165, 229, 0.06)',
+                        borderWidth: 3,
+                        tension: 0.25,
+                        fill: false,
+                        pointRadius: 4,
+                        pointBackgroundColor: '#00A5E5',
+                        pointBorderColor: '#ffffff',
+                        pointBorderWidth: 2,
+                        pointHoverRadius: 6,
+                        spanGaps: true,
+                        order: 2,
+                        yAxisID: 'y',
+                        datalabels: {
+                            display: true,
+                            color: '#111827',
+                            font: { ...CHART_TYPOGRAPHY.dataLabel, weight: '800' },
+                            anchor: 'end',
+                            align: 'end',
+                            offset: 6,
+                            formatter: (v) =>
+                                v != null && !Number.isNaN(v) ? String(Math.round(v)) : ''
+                        }
+                    }
+                ]
+            },
+            options: {
+                ...commonOptions,
+                plugins: {
+                    ...commonOptions.plugins,
+                    legend: {
+                        display: true,
+                        position: 'top',
+                        align: 'center',
+                        labels: legendLabelStyle
+                    },
+                    datalabels: {
+                        ...commonOptions.plugins.datalabels,
+                        clip: false
+                    },
+                    tooltip: {
+                        ...commonOptions.plugins.tooltip,
+                        mode: 'index',
+                        intersect: false,
+                        callbacks: {
+                            footer: (tooltipItems) => {
+                                const chart = tooltipItems[0]?.chart;
+                                const i = tooltipItems[0]?.dataIndex;
+                                const meta = chart?.$rule40YearlyMeta;
+                                if (!meta || i === undefined || meta.total[i] == null) return '';
+                                return (
+                                    'Rule of 40: ' +
+                                    meta.total[i].toFixed(1) +
+                                    ' = ' +
+                                    meta.adjGrowth[i].toFixed(1) +
+                                    '% + ' +
+                                    meta.ebitdaM[i].toFixed(1) +
+                                    '%'
+                                );
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    ...commonOptions.scales,
+                    x: {
+                        ...commonOptions.scales.x,
+                        stacked: true,
+                        ticks: {
+                            ...commonOptions.scales.x.ticks,
+                            maxRotation: 35,
+                            minRotation: 0
+                        }
+                    },
+                    y: {
+                        ...commonOptions.scales.y,
+                        stacked: true,
+                        beginAtZero: true,
+                        max: 100,
+                        ticks: { ...commonOptions.scales.y.ticks, callback: (v) => v }
+                    }
+                }
+            }
         });
     }
     
