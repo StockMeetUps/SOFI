@@ -42,6 +42,11 @@ function periodFills(data, actualFill, projFill) {
 function periodBorderWidths(data) {
     return data.map(d => (d.period === 'actual' ? 0 : 2));
 }
+// Line charts: dash the segment leading into the Q2 FY26 estimate point
+const estimateSegmentDash = {
+    borderDash: (ctx) =>
+        ctx.p1DataIndex === ctx.chart.data.labels.length - 1 ? [6, 4] : undefined
+};
 
 // ============================================
 // FY25 QUARTERLY ACTUALS (Q1-Q4 2025)
@@ -211,7 +216,8 @@ const Q1_2026_REF = {
     techPlatform: 75,
     financialServices: 429,
     members: 14.7,
-    products: 22.2
+    products: 22.2,
+    eps: 12
 };
 
 // Q2 2025 reference for Q2 2026 YoY calculations
@@ -245,8 +251,9 @@ const RULE_OF_40_ADJ_EBITDA_MARGIN_HIST = [
 // Q2 2026 ESTIMATE DEFAULTS
 // ============================================
 // Q2 FY26 estimate anchored to ~8% QoQ net revenue vs Q1 FY26 actual ($1,100M → $1,188M).
-// Also ~39% YoY vs Q2 FY25 ($855M). Margins held at ~30% EBITDA, ~12.5% net income.
-// Segments scaled proportionally from prior Q2 default mix; members/products follow FY25 Q1→Q2 seasonality.
+// Also ~39% YoY vs Q2 FY25 ($855M). EBITDA +8% QoQ vs Q1 actual $340M (~30.9% margin); net income follows +8% QoQ
+// vs Q1 actual $167M (~15.2% margin, same as Q1) — note mgmt guidance was more conservative (~12–13% margin).
+// Segments scaled proportionally from prior Q2 default mix; members default to 7.5% QoQ growth (14.7M → 15.8M).
 
 const Q2_2026_DEFAULTS = {
     lending: 666,
@@ -257,19 +264,25 @@ const Q2_2026_DEFAULTS = {
     gAndA: 214,
     technology: 203,
     costOfOps: 185,
-    pretaxIncome: 162,
-    netIncome: 149,
-    ebitda: 356,
-    eps: 12,
-    members: 15.6,          // ~+0.9M net new vs Q1 14.7M
+    pretaxIncome: 196,      // netIncome / 0.92
+    netIncome: 180,         // +8% QoQ vs Q1 FY26 actual $167M (167 × 1.08 ≈ 180)
+    ebitda: 367,            // +8% QoQ vs Q1 FY26 actual $340M
+    eps: 14,                // round(180 / 1,260M shares × 100)
+    members: 15.8,          // +1.1M net new vs Q1 14.7M (7.5% QoQ)
     products: 23.5,         // ~+1.3M vs Q1 22.2M
-    netMargin: 12.5,
-    ebitdaMargin: 30.0,
+    netMargin: 15.2,        // 180 / 1188 — same margin as Q1 actual
+    ebitdaMargin: 30.9,     // 367 / 1188
     salesMarketingPct: 30.5
 };
 
 // Current Q2 2026 values (modified by sliders)
 let Q2_2026_CURRENT = { ...Q2_2026_DEFAULTS };
+
+// Defaults for the growth-rate sliders (derived from Q2_2026_DEFAULTS vs Q1 FY26 actuals)
+const Q2_2026_SLIDER_DEFAULTS = {
+    revGrowthPct: 8.0,   // (1188 / 1100 - 1) * 100
+    memberGrowthPct: 7.5 // 14.7M -> 15.8M
+};
 
 // ============================================
 // CHART INSTANCES
@@ -302,6 +315,24 @@ function initializeSliders() {
     container.innerHTML = '';
     
     const sliderConfigs = [
+        { 
+            id: 'revGrowth', 
+            label: 'Revenue Growth % (QoQ)', 
+            min: 0, max: 15, step: 0.5, 
+            default: Q2_2026_SLIDER_DEFAULTS.revGrowthPct,
+            format: (v) => parseFloat(v).toFixed(1) + '%',
+            decimals: 1,
+            impacts: ['Net Revenue', 'Segments']
+        },
+        { 
+            id: 'memberGrowth', 
+            label: 'Member Growth % (QoQ)', 
+            min: 0, max: 12, step: 0.1, 
+            default: Q2_2026_SLIDER_DEFAULTS.memberGrowthPct,
+            format: (v) => parseFloat(v).toFixed(1) + '%',
+            decimals: 1,
+            impacts: ['Members']
+        },
         { 
             id: 'lending', 
             label: 'Lending Revenue', 
@@ -380,14 +411,6 @@ function initializeSliders() {
     
     container.appendChild(filtersContainer);
     
-    function updateSliderFill(slider) {
-        const min = parseFloat(slider.min);
-        const max = parseFloat(slider.max);
-        const value = parseFloat(slider.value);
-        const percentage = ((value - min) / (max - min)) * 100;
-        slider.style.background = `linear-gradient(to right, #00A5E5 0%, #00A5E5 ${percentage}%, #e8e8e8 ${percentage}%, #e8e8e8 100%)`;
-    }
-    
     sliderConfigs.forEach(config => {
         const slider = document.getElementById(`${config.id}Slider`);
         const container = document.getElementById(`${config.id}Container`);
@@ -406,7 +429,7 @@ function initializeSliders() {
             const deltaEl = document.getElementById(`${config.id}Delta`);
             if (Math.abs(delta) > 0.01) {
                 const deltaSign = delta > 0 ? '+' : '';
-                const deltaFormatted = config.id === 'members' || config.id === 'products' 
+                const deltaFormatted = config.step < 1 
                     ? deltaSign + delta.toFixed(1) 
                     : deltaSign + Math.round(delta);
                 deltaEl.textContent = `(${deltaFormatted})`;
@@ -418,10 +441,96 @@ function initializeSliders() {
                 container.classList.remove('slider-changed');
             }
             
+            // Keep the growth-rate sliders and their underlying sliders in sync.
+            // Programmatic updates via syncSliderDisplay() don't fire 'input'
+            // events, so there is no risk of an update loop.
+            if (config.id === 'revGrowth') {
+                applyRevenueGrowth(value);
+            } else if (config.id === 'lending' || config.id === 'techPlatform' || config.id === 'financialServices') {
+                syncRevGrowthFromSegments();
+            } else if (config.id === 'memberGrowth') {
+                syncSliderDisplay('members', +(Q1_2026_REF.members * (1 + value / 100)).toFixed(1));
+            } else if (config.id === 'members') {
+                syncSliderDisplay('memberGrowth', (value / Q1_2026_REF.members - 1) * 100);
+            }
+            
             updateSliderImpact(config);
             updateQ2_2026FromSliders();
         });
     });
+}
+
+function updateSliderFill(slider) {
+    const min = parseFloat(slider.min);
+    const max = parseFloat(slider.max);
+    const value = parseFloat(slider.value);
+    const percentage = ((value - min) / (max - min)) * 100;
+    slider.style.background = `linear-gradient(to right, #00A5E5 0%, #00A5E5 ${percentage}%, #e8e8e8 ${percentage}%, #e8e8e8 100%)`;
+}
+
+// Programmatically move a slider and refresh its value/delta/impact display.
+// Does NOT trigger the slider's 'input' handler, so it never causes update loops.
+function syncSliderDisplay(id, value) {
+    const slider = document.getElementById(`${id}Slider`);
+    const config = (window.sliderConfigs || []).find(c => c.id === id);
+    if (!slider || !config) return;
+    
+    slider.value = value;
+    updateSliderFill(slider);
+    document.getElementById(`${id}Value`).textContent = config.format(value);
+    
+    const delta = value - parseFloat(slider.dataset.default);
+    const deltaEl = document.getElementById(`${id}Delta`);
+    const container = document.getElementById(`${id}Container`);
+    if (Math.abs(delta) > 0.01) {
+        const deltaSign = delta > 0 ? '+' : '';
+        const deltaFormatted = config.step < 1 ? deltaSign + delta.toFixed(1) : deltaSign + Math.round(delta);
+        deltaEl.textContent = `(${deltaFormatted})`;
+        deltaEl.className = 'slider-delta ' + (delta > 0 ? 'delta-positive' : 'delta-negative');
+        container.classList.add('slider-changed');
+    } else {
+        deltaEl.textContent = '';
+        deltaEl.className = 'slider-delta';
+        container.classList.remove('slider-changed');
+    }
+    updateSliderImpact(config);
+}
+
+// Revenue Growth % slider moved: scale the three segment sliders proportionally
+// from the Q1 FY26 actual base so total net revenue = 1100 x (1 + pct/100),
+// preserving the current segment mix.
+function applyRevenueGrowth(pct) {
+    const target = Math.round(Q1_2026_REF.netRevenue * (1 + pct / 100));
+    const lendingSlider = document.getElementById('lendingSlider');
+    const techSlider = document.getElementById('techPlatformSlider');
+    const fsSlider = document.getElementById('financialServicesSlider');
+    
+    const lending = parseFloat(lendingSlider.value);
+    const tech = parseFloat(techSlider.value);
+    const finServices = parseFloat(fsSlider.value);
+    const total = lending + tech + finServices;
+    const ratio = total > 0 ? target / total : 1;
+    
+    const clamp = (v, slider) => Math.min(parseFloat(slider.max), Math.max(parseFloat(slider.min), v));
+    
+    // Lending & Financial Services round to their $5M steps; Tech Platform
+    // ($1M step) absorbs the remainder so the total matches the target exactly.
+    const newLending = clamp(Math.round(lending * ratio / 5) * 5, lendingSlider);
+    const newFinServices = clamp(Math.round(finServices * ratio / 5) * 5, fsSlider);
+    const newTech = clamp(target - newLending - newFinServices, techSlider);
+    
+    syncSliderDisplay('lending', newLending);
+    syncSliderDisplay('financialServices', newFinServices);
+    syncSliderDisplay('techPlatform', newTech);
+}
+
+// Segment slider moved: recompute the implied QoQ growth % on the growth slider.
+function syncRevGrowthFromSegments() {
+    const lending = parseFloat(document.getElementById('lendingSlider').value);
+    const tech = parseFloat(document.getElementById('techPlatformSlider').value);
+    const finServices = parseFloat(document.getElementById('financialServicesSlider').value);
+    const pct = ((lending + tech + finServices) / Q1_2026_REF.netRevenue - 1) * 100;
+    syncSliderDisplay('revGrowth', Math.min(15, Math.max(0, pct)));
 }
 
 function updateSliderImpact(config) {
@@ -437,7 +546,15 @@ function updateSliderImpact(config) {
     
     let impactHTML = '';
     
-    if (config.id === 'lending') {
+    if (config.id === 'revGrowth') {
+        const yoy = ((netRevenue - Q2_2025_REF.netRevenue) / Q2_2025_REF.netRevenue * 100).toFixed(1);
+        impactHTML = `<span class="impact-item">Net Rev: <strong>$${netRevenue.toLocaleString()}M</strong></span>
+                      <span class="impact-item">YoY: <strong>+${yoy}%</strong></span>`;
+    } else if (config.id === 'memberGrowth') {
+        const netNewVsQ1 = (members - Q1_2026_REF.members).toFixed(1);
+        impactHTML = `<span class="impact-item">Members: <strong>${members.toFixed(1)}M</strong></span>
+                      <span class="impact-item">Net new vs Q1: <strong>+${netNewVsQ1}M</strong></span>`;
+    } else if (config.id === 'lending') {
         const yoy = ((lending - Q2_2025_REF.lending) / Q2_2025_REF.lending * 100).toFixed(0);
         const qoq = ((lending - Q1_2026_REF.lending) / Q1_2026_REF.lending * 100).toFixed(0);
         impactHTML = `<span class="impact-item">YoY: <strong>+${yoy}%</strong></span>
@@ -491,9 +608,9 @@ function updateQ2_2026FromSliders() {
     const calculatedNetIncome = Math.round(Q2_2026_CURRENT.netRevenue * defaultNetMargin);
     Q2_2026_CURRENT.netIncome = calculatedNetIncome;
     
-    // Auto-calculate EPS
-    const epsPerMillion = Q2_2026_DEFAULTS.eps / Q2_2026_DEFAULTS.netIncome;
-    Q2_2026_CURRENT.eps = Math.round(calculatedNetIncome * epsPerMillion);
+    // Auto-calculate EPS (cents): net income ($M) / diluted shares (M) x 100
+    const sharesMillions = BASE_DATA.sharesOutstanding * 1000; // 1.26B -> 1,260M
+    Q2_2026_CURRENT.eps = Math.round(calculatedNetIncome / sharesMillions * 100);
     
     // Auto-calculate EBITDA
     const defaultEbitdaMargin = Q2_2026_DEFAULTS.ebitda / Q2_2026_DEFAULTS.netRevenue;
@@ -519,6 +636,8 @@ function resetControls() {
     Q2_2026_CURRENT = { ...Q2_2026_DEFAULTS };
     
     const sliderResets = [
+        { id: 'revGrowth', value: Q2_2026_SLIDER_DEFAULTS.revGrowthPct, format: (v) => parseFloat(v).toFixed(1) + '%' },
+        { id: 'memberGrowth', value: Q2_2026_SLIDER_DEFAULTS.memberGrowthPct, format: (v) => parseFloat(v).toFixed(1) + '%' },
         { id: 'lending', value: Q2_2026_DEFAULTS.lending, format: (v) => '$' + v + 'M' },
         { id: 'techPlatform', value: Q2_2026_DEFAULTS.techPlatform, format: (v) => '$' + v + 'M' },
         { id: 'financialServices', value: Q2_2026_DEFAULTS.financialServices, format: (v) => '$' + v + 'M' },
@@ -567,27 +686,8 @@ function getQuarterlyData() {
 function updateModel() {
     const data = getQuarterlyData();
     
-    // Q2 2026 estimate KPI cards
-    document.getElementById('q2_2026Members').textContent = Q2_2026_CURRENT.members.toFixed(1) + 'M';
-    document.getElementById('q2_2026Revenue').textContent = '$' + Q2_2026_CURRENT.netRevenue.toLocaleString() + 'M';
-    document.getElementById('q2_2026NetIncome').textContent = '$' + Q2_2026_CURRENT.netIncome.toLocaleString() + 'M';
-    document.getElementById('q2_2026EPS').textContent = Q2_2026_CURRENT.eps + '¢';
-    const qoqGrowthNum = ((Q2_2026_CURRENT.netRevenue - Q1_2026_REF.netRevenue) / Q1_2026_REF.netRevenue) * 100;
-    const qoqGrowth = qoqGrowthNum.toFixed(1);
-    const qoqEl = document.getElementById('q2_2026QoQGrowth');
-    qoqEl.textContent = (qoqGrowthNum >= 0 ? '+' : '') + qoqGrowth + '%';
-    qoqEl.style.color = qoqGrowthNum >= 0 ? '#1e9e63' : '#e25563';
-    document.getElementById('q2_2026EBITDA').textContent = '$' + Q2_2026_CURRENT.ebitda.toLocaleString() + 'M';
-
-    const q2_25 = QUARTERLY_ACTUALS.Q2;
-    const yoyRevPct = ((Q2_2026_CURRENT.netRevenue - q2_25.netRevenue) / q2_25.netRevenue) * 100;
-    const yoyNiPct = ((Q2_2026_CURRENT.netIncome - q2_25.netIncome) / q2_25.netIncome) * 100;
-    const yoyRevEl = document.getElementById('q2_2026YoYRevenue');
-    const yoyNiEl = document.getElementById('q2_2026YoYNI');
-    yoyRevEl.textContent = (yoyRevPct >= 0 ? '+' : '') + yoyRevPct.toFixed(1) + '%';
-    yoyRevEl.style.color = yoyRevPct >= 0 ? '#1e9e63' : '#e25563';
-    yoyNiEl.textContent = (yoyNiPct >= 0 ? '+' : '') + yoyNiPct.toFixed(1) + '%';
-    yoyNiEl.style.color = yoyNiPct >= 0 ? '#1e9e63' : '#e25563';
+    // Q2 FY26 estimate KPI cards (value + delta chips)
+    updateKpiCards();
     
     // Update charts
     updateAllCharts(data);
@@ -597,6 +697,59 @@ function updateModel() {
     
     // Update assumptions
     updateAssumptions(data);
+}
+
+// ============================================
+// KPI CARDS (Q2 FY26 estimate strip)
+// ============================================
+// 5 consolidated cards: big value + small delta chips. All figures derive
+// from Q2_2026_CURRENT vs Q1 FY26 (QoQ) and Q2 FY25 (YoY) references so the
+// sliders keep everything live. Positive deltas render green, negative red;
+// context chips (margins, net-new members) stay neutral.
+function updateKpiCards() {
+    const cur = Q2_2026_CURRENT;
+    const chip = (text, tone) => `<span class="kpi-chip kpi-chip-${tone}">${text}</span>`;
+    const pctChip = (pct, suffix) =>
+        chip((pct >= 0 ? '+' : '') + pct.toFixed(1) + '% ' + suffix, pct >= 0 ? 'pos' : 'neg');
+    const setCard = (valueId, valueText, chipsId, chipsHTML) => {
+        const valueEl = document.getElementById(valueId);
+        const chipsEl = document.getElementById(chipsId);
+        if (valueEl) valueEl.textContent = valueText;
+        if (chipsEl) chipsEl.innerHTML = chipsHTML;
+    };
+    
+    // Revenue: QoQ vs Q1 FY26, YoY vs Q2 FY25
+    const revQoQ = (cur.netRevenue / Q1_2026_REF.netRevenue - 1) * 100;
+    const revYoY = (cur.netRevenue / Q2_2025_REF.netRevenue - 1) * 100;
+    setCard('kpiRevenueValue', '$' + cur.netRevenue.toLocaleString() + 'M',
+        'kpiRevenueChips', pctChip(revQoQ, 'QoQ') + pctChip(revYoY, 'YoY'));
+    
+    // Adj. EBITDA: QoQ vs Q1 FY26 + margin
+    const ebitdaQoQ = (cur.ebitda / Q1_2026_REF.ebitda - 1) * 100;
+    const ebitdaMargin = cur.netRevenue > 0 ? (cur.ebitda / cur.netRevenue) * 100 : 0;
+    setCard('kpiEbitdaValue', '$' + cur.ebitda.toLocaleString() + 'M',
+        'kpiEbitdaChips', pctChip(ebitdaQoQ, 'QoQ') + chip(ebitdaMargin.toFixed(1) + '% margin', 'neutral'));
+    
+    // Net Income: QoQ vs Q1 FY26, YoY vs Q2 FY25 + margin
+    const niQoQ = (cur.netIncome / Q1_2026_REF.netIncome - 1) * 100;
+    const niYoY = (cur.netIncome / Q2_2025_REF.netIncome - 1) * 100;
+    const niMargin = cur.netRevenue > 0 ? (cur.netIncome / cur.netRevenue) * 100 : 0;
+    setCard('kpiNetIncomeValue', '$' + cur.netIncome.toLocaleString() + 'M',
+        'kpiNetIncomeChips',
+        pctChip(niQoQ, 'QoQ') + pctChip(niYoY, 'YoY') + chip(niMargin.toFixed(1) + '% margin', 'neutral'));
+    
+    // EPS: cents delta vs Q1 FY26 actual (12¢)
+    const epsDelta = cur.eps - Q1_2026_REF.eps;
+    setCard('kpiEpsValue', cur.eps + '¢',
+        'kpiEpsChips',
+        chip((epsDelta >= 0 ? '+' : '') + epsDelta + '¢ QoQ', epsDelta >= 0 ? 'pos' : 'neg'));
+    
+    // Members: QoQ % vs Q1 FY26 + net new
+    const membersQoQ = (cur.members / Q1_2026_REF.members - 1) * 100;
+    const netNew = cur.members - Q1_2026_REF.members;
+    setCard('kpiMembersValue', cur.members.toFixed(1) + 'M',
+        'kpiMembersChips',
+        pctChip(membersQoQ, 'QoQ') + chip((netNew >= 0 ? '+' : '') + netNew.toFixed(1) + 'M net new', 'neutral'));
 }
 
 // ============================================
@@ -837,9 +990,9 @@ function updateAssumptions(data) {
         <ul class="assumptions-list">
             <li><strong>FY25 Actuals:</strong> Revenue $${fy25Revenue.toLocaleString()}M, Net Income $${fy25NetIncome.toLocaleString()}M, Avg Net Margin ${fy25AvgMargin}% — Record $1B+ quarterly revenue in Q4</li>
             <li><strong>Q1 FY26 Actuals (Apr 29, 2026):</strong> Revenue $${q1_26.netRevenue}M (+${((q1_26.netRevenue - data[0].netRevenue) / data[0].netRevenue * 100).toFixed(0)}% YoY), Net Income $${q1_26.netIncome}M (+${((q1_26.netIncome - data[0].netIncome) / data[0].netIncome * 100).toFixed(0)}% YoY), 14.7M members, Rule of 40 score 72</li>
-            <li><strong>Q2 FY26 Estimate:</strong> Revenue $${q2_26.netRevenue}M (+${((q2_26.netRevenue - q1_26.netRevenue) / q1_26.netRevenue * 100).toFixed(1)}% QoQ vs Q1 FY26 actual, +${yoyRevGrowth}% YoY vs Q2 FY25), Net Income $${q2_26.netIncome}M (+${yoyNIGrowth}% YoY) — ~30% EBITDA margin, ~12–13% adj. NI margin</li>
+            <li><strong>Q2 FY26 Estimate:</strong> Revenue $${q2_26.netRevenue}M (+${((q2_26.netRevenue - q1_26.netRevenue) / q1_26.netRevenue * 100).toFixed(1)}% QoQ vs Q1 FY26 actual, +${yoyRevGrowth}% YoY vs Q2 FY25), Net Income $${q2_26.netIncome}M (+8% QoQ vs Q1 actual $167M, +${yoyNIGrowth}% YoY, ~15.2% margin) — EBITDA +8% QoQ vs Q1 actual $340M (~30.9% margin); mgmt guidance was more conservative (~12–13% NI margin)</li>
             <li><strong>2026 Full-Year Guidance (reiterated):</strong> ~$4.655B adjusted net revenue, ~$1.6B adjusted EBITDA, ~$825M adjusted net income, ~60¢ adj. EPS, 30%+ member growth</li>
-            <li><strong>Q2 2026 Model Default:</strong> ~8% QoQ revenue vs Q1 FY26 actual ($1,100M), ~30% adjusted EBITDA margin, ~12–13% adjusted net income margin</li>
+            <li><strong>Q2 2026 Model Default:</strong> ~8% QoQ revenue vs Q1 FY26 actual ($1,100M), EBITDA +8% QoQ vs Q1 actual $340M (~30.9% margin), ~12–13% adjusted net income margin</li>
         </ul>
     `;
 }
@@ -959,6 +1112,14 @@ function initializeCharts() {
         caretSize: 6,
         displayColors: true
     };
+    // Two-line datalabel helper: compact value on line 1, QoQ growth on line 2.
+    // First bar/point has no prior quarter, so it shows the value only.
+    const withQoQPct = (valueStr, value, prev, decimals) => {
+        if (!(prev > 0)) return valueStr;
+        const qoq = ((value - prev) / prev * 100).toFixed(decimals);
+        return valueStr + '\n' + (qoq >= 0 ? '+' : '') + qoq + '% QoQ';
+    };
+
     // Rounded, softly-capped bars everywhere
     const BAR_STYLE = {
         borderRadius: { topLeft: 6, topRight: 6, bottomLeft: 0, bottomRight: 0 },
@@ -979,6 +1140,10 @@ function initializeCharts() {
         responsive: true,
         maintainAspectRatio: true,
         aspectRatio: 1.91,
+        // Room above bars/points so datalabels never collide with the legend
+        // or clip at the edges (labels are clamped into this padded area).
+        // Sized for the two-line value + QoQ labels on the main charts.
+        layout: { padding: { top: 38, right: 24, left: 6 } },
         plugins: {
             legend: {
                 display: true,
@@ -989,6 +1154,7 @@ function initializeCharts() {
             datalabels: {
                 display: true,
                 clip: false,
+                clamp: true,
                 color: '#111827',
                 anchor: 'end',
                 align: 'top',
@@ -1033,21 +1199,35 @@ function initializeCharts() {
                 ...commonOptions,
                 plugins: {
                     ...commonOptions.plugins,
+                    legend: { display: false },
                     datalabels: {
                         ...commonOptions.plugins.datalabels,
-                        formatter: (value, context) => {
-                            const data = context.chart.data.datasets[0].data;
-                            const index = context.dataIndex;
-                            let label = '$' + value + 'M';
-                            if (index > 0 && data[index - 1] > 0) {
-                                const qoqGrowth = ((value - data[index - 1]) / data[index - 1] * 100).toFixed(1);
-                                label += '\nQoQ ' + (qoqGrowth >= 0 ? '+' : '') + qoqGrowth + '%';
+                        font: CHART_TYPOGRAPHY.dataLabelCompact,
+                        textAlign: 'center',
+                        formatter: (value, ctx) => {
+                            const data = ctx.chart.data.datasets[0].data;
+                            const i = ctx.dataIndex;
+                            return withQoQPct('$' + value.toLocaleString() + 'M', value, i > 0 ? data[i - 1] : 0, 1);
+                        }
+                    },
+                    tooltip: {
+                        ...tooltipStyle,
+                        callbacks: {
+                            label: (ctx) => ' Net Revenue: $' + ctx.parsed.y.toLocaleString() + 'M',
+                            afterLabel: (ctx) => {
+                                const data = ctx.chart.data.datasets[0].data;
+                                const i = ctx.dataIndex;
+                                const lines = [];
+                                if (i > 0 && data[i - 1] > 0) {
+                                    const qoq = ((ctx.parsed.y - data[i - 1]) / data[i - 1] * 100).toFixed(1);
+                                    lines.push('QoQ ' + (qoq >= 0 ? '+' : '') + qoq + '%');
+                                }
+                                if (yoyRevenueRefs[i] > 0) {
+                                    const yoy = ((ctx.parsed.y - yoyRevenueRefs[i]) / yoyRevenueRefs[i] * 100).toFixed(0);
+                                    lines.push('YoY ' + (yoy >= 0 ? '+' : '') + yoy + '%');
+                                }
+                                return lines.join('\n');
                             }
-                            if (yoyRevenueRefs[index] > 0) {
-                                const yoyGrowth = ((value - yoyRevenueRefs[index]) / yoyRevenueRefs[index] * 100).toFixed(0);
-                                label += '\nYoY +' + yoyGrowth + '%';
-                            }
-                            return label;
                         }
                     }
                 }
@@ -1104,27 +1284,44 @@ function initializeCharts() {
                             if (dataIndex === 3) return datasetIndex === 1;
                             return datasetIndex === 0;
                         },
+                        font: CHART_TYPOGRAPHY.dataLabelCompact,
+                        textAlign: 'center',
                         formatter: (value, context) => {
                             const dataIndex = context.dataIndex;
                             const baseData = context.chart.data.datasets[0].data;
                             const chymData = context.chart.data.datasets[1].data;
                             const totalValue = baseData[dataIndex] + (chymData[dataIndex] || 0);
-                            
-                            let label = '$' + totalValue + 'M';
-                            if (dataIndex === 3) label += ' (incl $30M CHYM)';
-                            
-                            if (dataIndex > 0) {
-                                const prevTotal = baseData[dataIndex - 1] + (chymData[dataIndex - 1] || 0);
-                                if (prevTotal > 0) {
-                                    const qoqGrowth = ((totalValue - prevTotal) / prevTotal * 100).toFixed(0);
-                                    label += '\nQoQ ' + (qoqGrowth >= 0 ? '+' : '') + qoqGrowth + '%';
+                            const prevTotal = dataIndex > 0
+                                ? baseData[dataIndex - 1] + (chymData[dataIndex - 1] || 0)
+                                : 0;
+                            return withQoQPct('$' + totalValue + 'M', totalValue, prevTotal, 0);
+                        }
+                    },
+                    tooltip: {
+                        ...tooltipStyle,
+                        callbacks: {
+                            afterBody: (items) => {
+                                const ctx = items[0];
+                                if (!ctx) return '';
+                                const i = ctx.dataIndex;
+                                const baseData = ctx.chart.data.datasets[0].data;
+                                const chymData = ctx.chart.data.datasets[1].data;
+                                const total = baseData[i] + (chymData[i] || 0);
+                                const lines = ['Total: $' + total + 'M'];
+                                if (i === 3) lines.push('Incl. $30M CHYM termination fee');
+                                if (i > 0) {
+                                    const prevTotal = baseData[i - 1] + (chymData[i - 1] || 0);
+                                    if (prevTotal > 0) {
+                                        const qoq = ((total - prevTotal) / prevTotal * 100).toFixed(0);
+                                        lines.push('QoQ ' + (qoq >= 0 ? '+' : '') + qoq + '%');
+                                    }
                                 }
+                                if (yoyNetIncomeRefs[i] > 0) {
+                                    const yoy = ((total - yoyNetIncomeRefs[i]) / yoyNetIncomeRefs[i] * 100).toFixed(0);
+                                    lines.push('YoY ' + (yoy >= 0 ? '+' : '') + yoy + '%');
+                                }
+                                return lines.join('\n');
                             }
-                            if (yoyNetIncomeRefs[dataIndex] > 0) {
-                                const yoyGrowth = ((totalValue - yoyNetIncomeRefs[dataIndex]) / yoyNetIncomeRefs[dataIndex] * 100).toFixed(0);
-                                label += '\nYoY +' + yoyGrowth + '%';
-                            }
-                            return label;
                         }
                     }
                 }
@@ -1161,27 +1358,31 @@ function initializeCharts() {
                         // White on solid actual fills; dark on the light projected column
                         color: (ctx) => (ctx.dataIndex === ctx.chart.data.labels.length - 1 ? '#111827' : '#ffffff'),
                         font: CHART_TYPOGRAPHY.dataLabelCompact,
-                        formatter: (value, context) => {
-                            if (value <= 100) return '';
-                            const datasetIndex = context.datasetIndex;
-                            const quarterIndex = context.dataIndex;
-                            const segmentKey = ['lending', 'techPlatform', 'financialServices'][datasetIndex];
-                            
-                            const yoyRef = yoySegmentRefs[quarterIndex];
-                            const yoyValue = yoyRef[segmentKey];
-                            const yoyGrowth = ((value - yoyValue) / yoyValue * 100).toFixed(0);
-                            const yoySign = yoyGrowth >= 0 ? '+' : '';
-                            
-                            let qoqStr = '';
-                            if (quarterIndex > 0) {
-                                const prevValue = context.chart.data.datasets[datasetIndex].data[quarterIndex - 1];
-                                if (prevValue > 0) {
-                                    const qoqGrowth = ((value - prevValue) / prevValue * 100).toFixed(0);
-                                    qoqStr = '\nQoQ ' + (qoqGrowth >= 0 ? '+' : '') + qoqGrowth + '%';
+                        formatter: (value) => (value > 100 ? '$' + value + 'M' : '')
+                    },
+                    tooltip: {
+                        ...tooltipStyle,
+                        callbacks: {
+                            afterLabel: (ctx) => {
+                                const value = ctx.parsed.y;
+                                const datasetIndex = ctx.datasetIndex;
+                                const i = ctx.dataIndex;
+                                const segmentKey = ['lending', 'techPlatform', 'financialServices'][datasetIndex];
+                                const lines = [];
+                                if (i > 0) {
+                                    const prev = ctx.chart.data.datasets[datasetIndex].data[i - 1];
+                                    if (prev > 0) {
+                                        const qoq = ((value - prev) / prev * 100).toFixed(0);
+                                        lines.push('QoQ ' + (qoq >= 0 ? '+' : '') + qoq + '%');
+                                    }
                                 }
+                                const yoyValue = yoySegmentRefs[i] && yoySegmentRefs[i][segmentKey];
+                                if (yoyValue > 0) {
+                                    const yoy = ((value - yoyValue) / yoyValue * 100).toFixed(0);
+                                    lines.push('YoY ' + (yoy >= 0 ? '+' : '') + yoy + '%');
+                                }
+                                return lines.join('\n');
                             }
-                            
-                            return '$' + value + 'M' + qoqStr + '\nYoY ' + yoySign + yoyGrowth + '%';
                         }
                     }
                 }
@@ -1390,9 +1591,37 @@ function initializeCharts() {
                 ...commonOptions,
                 plugins: {
                     ...commonOptions.plugins,
+                    legend: { display: false },
                     datalabels: {
                         ...commonOptions.plugins.datalabels,
-                        formatter: (v) => v + '¢'
+                        font: CHART_TYPOGRAPHY.dataLabelCompact,
+                        textAlign: 'center',
+                        formatter: (v, ctx) => {
+                            const data = ctx.chart.data.datasets[0].data;
+                            const i = ctx.dataIndex;
+                            return withQoQPct(v + '¢', v, i > 0 ? data[i - 1] : 0, 0);
+                        }
+                    },
+                    tooltip: {
+                        ...tooltipStyle,
+                        callbacks: {
+                            label: (ctx) => ' EPS: ' + ctx.parsed.y + '¢',
+                            afterLabel: (ctx) => {
+                                const data = ctx.chart.data.datasets[0].data;
+                                const i = ctx.dataIndex;
+                                const lines = [];
+                                if (i > 0 && data[i - 1] > 0) {
+                                    const qoq = ((ctx.parsed.y - data[i - 1]) / data[i - 1] * 100).toFixed(0);
+                                    lines.push('QoQ ' + (qoq >= 0 ? '+' : '') + qoq + '%');
+                                }
+                                // Same-series YoY: Q1/Q2 FY26 vs Q1/Q2 FY25 (4 quarters back)
+                                if (i >= 4 && data[i - 4] > 0) {
+                                    const yoy = ((ctx.parsed.y - data[i - 4]) / data[i - 4] * 100).toFixed(0);
+                                    lines.push('YoY ' + (yoy >= 0 ? '+' : '') + yoy + '%');
+                                }
+                                return lines.join('\n');
+                            }
+                        }
                     }
                 }
             }
@@ -1425,25 +1654,50 @@ function initializeCharts() {
                     pointBackgroundColor: '#ffffff',
                     pointBorderColor: QCOLORS.cyan,
                     pointBorderWidth: 2.5,
-                    pointHoverRadius: 7
+                    pointHoverRadius: 7,
+                    segment: estimateSegmentDash
                 }]
             },
             options: {
                 ...commonOptions,
                 plugins: {
                     ...commonOptions.plugins,
+                    legend: { display: false },
                     datalabels: {
                         ...commonOptions.plugins.datalabels,
                         offset: 6,
-                        formatter: (value, context) => {
-                            const data = context.chart.data.datasets[0].data;
-                            const index = context.dataIndex;
-                            let label = value.toFixed(1) + 'M';
-                            if (index > 0) {
-                                const qoqGrowthM = value - data[index - 1];
-                                label += '\nQoQ ' + (qoqGrowthM >= 0 ? '+' : '') + qoqGrowthM.toFixed(2) + 'M';
+                        font: CHART_TYPOGRAPHY.dataLabelCompact,
+                        textAlign: 'center',
+                        formatter: (v, ctx) => {
+                            const data = ctx.chart.data.datasets[0].data;
+                            const i = ctx.dataIndex;
+                            let label = v.toFixed(1) + 'M';
+                            if (i > 0) {
+                                const qoqM = v - data[i - 1];
+                                label += '\n' + (qoqM >= 0 ? '+' : '') + qoqM.toFixed(1) + 'M QoQ';
                             }
                             return label;
+                        }
+                    },
+                    tooltip: {
+                        ...tooltipStyle,
+                        callbacks: {
+                            label: (ctx) => ' Members: ' + ctx.parsed.y.toFixed(1) + 'M',
+                            afterLabel: (ctx) => {
+                                const data = ctx.chart.data.datasets[0].data;
+                                const i = ctx.dataIndex;
+                                const lines = [];
+                                if (i > 0) {
+                                    const qoqM = ctx.parsed.y - data[i - 1];
+                                    lines.push('QoQ ' + (qoqM >= 0 ? '+' : '') + qoqM.toFixed(2) + 'M net new');
+                                }
+                                // Same-series YoY: Q1/Q2 FY26 vs Q1/Q2 FY25 (4 quarters back)
+                                if (i >= 4 && data[i - 4] > 0) {
+                                    const yoy = ((ctx.parsed.y - data[i - 4]) / data[i - 4] * 100).toFixed(0);
+                                    lines.push('YoY ' + (yoy >= 0 ? '+' : '') + yoy + '%');
+                                }
+                                return lines.join('\n');
+                            }
                         }
                     }
                 },
@@ -1481,17 +1735,51 @@ function initializeCharts() {
                     pointBackgroundColor: '#ffffff',
                     pointBorderColor: QCOLORS.periwinkle,
                     pointBorderWidth: 2.5,
-                    pointHoverRadius: 7
+                    pointHoverRadius: 7,
+                    segment: estimateSegmentDash
                 }]
             },
             options: {
                 ...commonOptions,
                 plugins: {
                     ...commonOptions.plugins,
+                    legend: { display: false },
                     datalabels: {
                         ...commonOptions.plugins.datalabels,
                         offset: 6,
-                        formatter: (v) => v.toFixed(1) + 'M'
+                        font: CHART_TYPOGRAPHY.dataLabelCompact,
+                        textAlign: 'center',
+                        formatter: (v, ctx) => {
+                            const data = ctx.chart.data.datasets[0].data;
+                            const i = ctx.dataIndex;
+                            let label = v.toFixed(1) + 'M';
+                            if (i > 0) {
+                                const qoqM = v - data[i - 1];
+                                label += '\n' + (qoqM >= 0 ? '+' : '') + qoqM.toFixed(1) + 'M QoQ';
+                            }
+                            return label;
+                        }
+                    },
+                    tooltip: {
+                        ...tooltipStyle,
+                        callbacks: {
+                            label: (ctx) => ' Products: ' + ctx.parsed.y.toFixed(1) + 'M',
+                            afterLabel: (ctx) => {
+                                const data = ctx.chart.data.datasets[0].data;
+                                const i = ctx.dataIndex;
+                                const lines = [];
+                                if (i > 0) {
+                                    const qoqM = ctx.parsed.y - data[i - 1];
+                                    lines.push('QoQ ' + (qoqM >= 0 ? '+' : '') + qoqM.toFixed(2) + 'M net new');
+                                }
+                                // Same-series YoY: Q1/Q2 FY26 vs Q1/Q2 FY25 (4 quarters back)
+                                if (i >= 4 && data[i - 4] > 0) {
+                                    const yoy = ((ctx.parsed.y - data[i - 4]) / data[i - 4] * 100).toFixed(0);
+                                    lines.push('YoY ' + (yoy >= 0 ? '+' : '') + yoy + '%');
+                                }
+                                return lines.join('\n');
+                            }
+                        }
                     }
                 }
             }
@@ -1560,13 +1848,15 @@ function initializeCharts() {
                     pointBackgroundColor: '#ffffff',
                     pointBorderColor: QCOLORS.green,
                     pointBorderWidth: 2.5,
-                    pointHoverRadius: 7
+                    pointHoverRadius: 7,
+                    segment: estimateSegmentDash
                 }]
             },
             options: {
                 ...commonOptions,
                 plugins: {
                     ...commonOptions.plugins,
+                    legend: { display: false },
                     datalabels: {
                         ...commonOptions.plugins.datalabels,
                         offset: 6,
@@ -1608,21 +1898,35 @@ function initializeCharts() {
                 },
                 plugins: {
                     ...commonOptions.plugins,
+                    legend: { display: false },
                     datalabels: {
                         ...commonOptions.plugins.datalabels,
-                        formatter: (value, context) => {
-                            const data = context.chart.data.datasets[0].data;
-                            const index = context.dataIndex;
-                            let label = '$' + Math.round(value) + 'M';
-                            if (index > 0 && data[index - 1] > 0) {
-                                const qoqGrowth = ((value - data[index - 1]) / data[index - 1] * 100).toFixed(0);
-                                label += '\nQoQ ' + (qoqGrowth >= 0 ? '+' : '') + qoqGrowth + '%';
+                        font: CHART_TYPOGRAPHY.dataLabelCompact,
+                        textAlign: 'center',
+                        formatter: (v, ctx) => {
+                            const data = ctx.chart.data.datasets[0].data;
+                            const i = ctx.dataIndex;
+                            return withQoQPct('$' + Math.round(v) + 'M', v, i > 0 ? data[i - 1] : 0, 1);
+                        }
+                    },
+                    tooltip: {
+                        ...tooltipStyle,
+                        callbacks: {
+                            label: (ctx) => ' EBITDA: $' + Math.round(ctx.parsed.y) + 'M',
+                            afterLabel: (ctx) => {
+                                const data = ctx.chart.data.datasets[0].data;
+                                const i = ctx.dataIndex;
+                                const lines = [];
+                                if (i > 0 && data[i - 1] > 0) {
+                                    const qoq = ((ctx.parsed.y - data[i - 1]) / data[i - 1] * 100).toFixed(0);
+                                    lines.push('QoQ ' + (qoq >= 0 ? '+' : '') + qoq + '%');
+                                }
+                                if (yoyEbitdaRefs[i] > 0) {
+                                    const yoy = ((ctx.parsed.y - yoyEbitdaRefs[i]) / yoyEbitdaRefs[i] * 100).toFixed(0);
+                                    lines.push('YoY ' + (yoy >= 0 ? '+' : '') + yoy + '%');
+                                }
+                                return lines.join('\n');
                             }
-                            if (yoyEbitdaRefs[index] > 0) {
-                                const yoyGrowth = ((value - yoyEbitdaRefs[index]) / yoyEbitdaRefs[index] * 100).toFixed(0);
-                                label += '\nYoY +' + yoyGrowth + '%';
-                            }
-                            return label;
                         }
                     }
                 }
@@ -1649,7 +1953,17 @@ function initializeCharts() {
                     ...commonOptions.plugins,
                     datalabels: {
                         ...commonOptions.plugins.datalabels,
-                        font: CHART_TYPOGRAPHY.dataLabelCompact,
+                        font: { ...CHART_TYPOGRAPHY.dataLabelCompact, size: 10 },
+                        // Positive bars: label above the bar tip. Negative bars: label
+                        // below the tip (staggered by bar depth, so adjacent negatives
+                        // don't collide at the zero line). Bars clipped by the y-min
+                        // keep the label just above the chart floor instead.
+                        align: (ctx) => {
+                            const v = ctx.dataset.data[ctx.dataIndex];
+                            if (v >= 0) return 'top';
+                            return v <= -14 ? 'top' : 'bottom';
+                        },
+                        offset: 2,
                         formatter: (v) => (v >= 0 ? '+' : '') + v.toFixed(0) + '%'
                     }
                 },
@@ -1657,8 +1971,8 @@ function initializeCharts() {
                     ...commonOptions.scales,
                     y: {
                         ...commonOptions.scales.y,
-                        min: -10,
-                        max: 25,
+                        min: -14,
+                        max: 32,
                         ticks: { ...commonOptions.scales.y.ticks, callback: (v) => v + '%' }
                     }
                 }

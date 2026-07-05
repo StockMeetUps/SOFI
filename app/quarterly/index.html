@@ -7,9 +7,9 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <title>SOFI : FY25 Actuals, Q1 2026 Actuals & Q2 2026 Estimate</title>
-    <link rel="stylesheet" href="../yearly/styles.css?v=20260420">
-    <link rel="stylesheet" href="styles.css?v=20260406">
-    <link rel="stylesheet" href="quarterly-styles.css?v=20260428">
+    <link rel="stylesheet" href="../yearly/styles.css?v=20260705j">
+    <link rel="stylesheet" href="styles.css?v=20260705j">
+    <link rel="stylesheet" href="quarterly-styles.css?v=20260705j">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js" onerror="console.log('Datalabels plugin failed to load')"></script>
     <style>
@@ -31,52 +31,37 @@
             </div>
             <p class="header-data-line">Actuals through Q1 FY26 · Q1 earnings released Apr 29, 2026</p>
             <div class="header-intro">
-                <p class="header-intro-lead"><strong>Note:</strong> This interactive SOFI projection model is for educational purposes only; it is not investment advice. Q1 FY26 figures are from the Apr 29, 2026 earnings release. Q2 FY26 defaults target ~8% QoQ revenue vs Q1 FY26 actual (~30% EBITDA margin, ~12–13% adj. net income margin).</p>
+                <p class="header-intro-lead"><strong>Note:</strong> This interactive SOFI projection model is for educational purposes only; it is not investment advice. Q1 FY26 figures are from the Apr 29, 2026 earnings release. Q2 FY26 defaults target ~8% QoQ revenue vs Q1 FY26 actual (EBITDA +8% QoQ vs Q1 actual $340M, ~30.9% margin; net income +8% QoQ vs Q1 actual $167M, ~15.2% margin — mgmt guidance was more conservative at ~12–13%).</p>
             </div>
         </header>
 
         <div class="outlook-kpi-compact">
-        <h2 class="section-heading-yearly">SOFI : Q2 2026 Estimate</h2>
+        <h2 class="section-heading-yearly">SOFI : Q2 FY26 Estimate</h2>
         <section class="kpi-section kpi-section-quarterly">
             <div class="kpi-card">
-                <div class="kpi-label">Q2 2026 Members (Est)</div>
-                <div class="kpi-value cyan" id="q2_2026Members">0M</div>
-                <div class="kpi-unit">Millions</div>
+                <div class="kpi-label">Revenue</div>
+                <div class="kpi-value cyan" id="kpiRevenueValue">$0</div>
+                <div class="kpi-chips" id="kpiRevenueChips"></div>
             </div>
             <div class="kpi-card">
-                <div class="kpi-label">QoQ Revenue Growth</div>
-                <div class="kpi-value" id="q2_2026QoQGrowth">0%</div>
-                <div class="kpi-unit">vs Q1 FY26</div>
+                <div class="kpi-label">Adj. EBITDA</div>
+                <div class="kpi-value cyan" id="kpiEbitdaValue">$0</div>
+                <div class="kpi-chips" id="kpiEbitdaChips"></div>
             </div>
             <div class="kpi-card">
-                <div class="kpi-label">YoY Revenue</div>
-                <div class="kpi-value" id="q2_2026YoYRevenue">0%</div>
-                <div class="kpi-unit">vs Q2 FY25</div>
+                <div class="kpi-label">Net Income</div>
+                <div class="kpi-value cyan" id="kpiNetIncomeValue">$0</div>
+                <div class="kpi-chips" id="kpiNetIncomeChips"></div>
             </div>
             <div class="kpi-card">
-                <div class="kpi-label">YoY Net Income</div>
-                <div class="kpi-value" id="q2_2026YoYNI">0%</div>
-                <div class="kpi-unit">vs Q2 FY25</div>
+                <div class="kpi-label">EPS</div>
+                <div class="kpi-value cyan" id="kpiEpsValue">0¢</div>
+                <div class="kpi-chips" id="kpiEpsChips"></div>
             </div>
             <div class="kpi-card">
-                <div class="kpi-label">Q2 2026 Revenue (Est)</div>
-                <div class="kpi-value cyan" id="q2_2026Revenue">$0</div>
-                <div class="kpi-unit">Millions</div>
-            </div>
-            <div class="kpi-card">
-                <div class="kpi-label">Q2 2026 EBITDA (Est)</div>
-                <div class="kpi-value cyan" id="q2_2026EBITDA">$0</div>
-                <div class="kpi-unit">Millions</div>
-            </div>
-            <div class="kpi-card">
-                <div class="kpi-label">Q2 2026 Net Income (Est)</div>
-                <div class="kpi-value cyan" id="q2_2026NetIncome">$0</div>
-                <div class="kpi-unit">Millions</div>
-            </div>
-            <div class="kpi-card">
-                <div class="kpi-label">Q2 2026 EPS (Est)</div>
-                <div class="kpi-value cyan" id="q2_2026EPS">0¢</div>
-                <div class="kpi-unit">Cents</div>
+                <div class="kpi-label">Members</div>
+                <div class="kpi-value cyan" id="kpiMembersValue">0M</div>
+                <div class="kpi-chips" id="kpiMembersChips"></div>
             </div>
         </section>
         </div>
@@ -213,6 +198,6 @@
         </section>
     </div>
 
-    <script src="quarterly-model.js?v=20260705b"></script>
+    <script src="quarterly-model.js?v=20260705j"></script>
 </body>
 </html>

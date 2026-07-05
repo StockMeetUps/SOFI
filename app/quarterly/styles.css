@@ -444,72 +444,53 @@ h1, h2 {
 
 table {
     width: 100%;
-    border-collapse: collapse;
+    border-collapse: separate;
+    border-spacing: 0;
     background: #ffffff;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    border: 1px solid #e6eef5;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04), 0 8px 20px -12px rgba(2, 62, 92, 0.12);
 }
 
 thead {
-    background: #000000;
+    background: linear-gradient(180deg, #1f2937 0%, #111827 100%);
     color: white;
 }
 
 th {
-    padding: 15px;
+    padding: 13px 15px;
     text-align: right;
-    border-bottom: 1px solid #e0e0e0;
+    border-bottom: 1px solid #0b1220;
     color: #ffffff;
-    background-color: #000000;
+    background-color: transparent;
+    letter-spacing: 0.02em;
 }
 
 td {
-    padding: 15px;
+    padding: 12px 15px;
     text-align: right;
-    border-bottom: 1px solid #e0e0e0;
-    color: #000000;
+    border-bottom: 1px solid #eef2f6;
+    color: #1f2937;
     background-color: transparent;
+    font-variant-numeric: tabular-nums;
 }
 
 th:first-child, td:first-child {
     text-align: left;
 }
 
-tbody tr:hover {
-    background: #f8f9fa;
+tbody tr:last-child td {
+    border-bottom: none;
 }
 
-/* Color coding for table rows - improved contrast */
-tbody tr.past-performance {
-    background-color: #e8f5e9;
-    border-left: 3px solid #4caf50;
+/* Clean zebra striping */
+tbody tr:nth-child(even) td {
+    background-color: #f8fafc;
 }
 
-tbody tr.company-guidance {
-    background-color: #fff3e0;
-    border-left: 3px solid #ff9800;
-}
-
-tbody tr.projection {
-    background-color: #e3f2fd;
-    border-left: 3px solid #2196f3;
-}
-
-tbody tr.past-performance:hover {
-    background-color: #c8e6c9;
-    transform: scale(1.01);
-    transition: all 0.2s;
-}
-
-tbody tr.company-guidance:hover {
-    background-color: #ffe0b2;
-    transform: scale(1.01);
-    transition: all 0.2s;
-}
-
-tbody tr.projection:hover {
-    background-color: #bbdefb;
-    transform: scale(1.01);
-    transition: all 0.2s;
+tbody tr:hover td {
+    background-color: #f0f9ff;
 }
 
 .legend {
@@ -535,18 +516,18 @@ tbody tr.projection:hover {
 }
 
 .legend-color.past-performance {
-    background-color: #4caf50;
-    border: 1px solid #388e3c;
+    background-color: #f8fafc;
+    border: 1px solid #cbd5e1;
 }
 
 .legend-color.company-guidance {
-    background-color: #ff9800;
-    border: 1px solid #f57c00;
+    background-color: #fff7ed;
+    border: 1px solid #fdba74;
 }
 
 .legend-color.projection {
-    background-color: #2196f3;
-    border: 1px solid #1976d2;
+    background-color: rgba(0, 165, 229, 0.15);
+    border: 1px dashed #0090cc;
 }
 
 .dataset-credit {
@@ -567,11 +548,11 @@ tbody tr.projection:hover {
     text-decoration: underline;
 }
 
-/* Q1 outlook: .kpi-section, .kpi-card from ../yearly/styles.css */
+/* Q2 outlook: .kpi-section, .kpi-card from ../yearly/styles.css — 5 consolidated cards in one row */
 .kpi-section-quarterly {
     margin-top: 0;
     margin-bottom: 18px;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(5, minmax(0, 1fr));
     gap: 10px;
 }
 
@@ -618,9 +599,15 @@ tbody tr.projection:hover {
 .chart-container {
     background: #fff;
     padding: 12px;
-    border-radius: 6px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-    border: none;
+    border-radius: 10px;
+    border: 1px solid #eaf1f7;
+    box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04), 0 8px 20px -12px rgba(2, 62, 92, 0.14);
+    transition: box-shadow 0.18s ease, border-color 0.18s ease;
+}
+
+.chart-container:hover {
+    border-color: #d8e9f5;
+    box-shadow: 0 2px 4px rgba(16, 24, 40, 0.05), 0 14px 30px -14px rgba(2, 98, 145, 0.22);
 }
 
 .trend-charts-section .chart-container,
@@ -803,12 +790,13 @@ tbody tr.projection:hover {
 }
 
 .assumptions-section {
-    background: #f8f9fa;
+    background: #ffffff;
     padding: 15px 20px 20px 20px;
     border-radius: 10px;
     margin-top: 40px;
     margin-bottom: 30px;
-    border: 1px solid #e0e0e0;
+    border: 1px solid #eaf1f7;
+    box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04), 0 8px 20px -12px rgba(2, 62, 92, 0.14);
     word-wrap: break-word;
     overflow-wrap: break-word;
     font-size: 0.72em;

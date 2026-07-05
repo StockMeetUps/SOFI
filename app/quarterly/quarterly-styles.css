@@ -24,26 +24,59 @@
 }
 
 .outlook-kpi-compact .kpi-card {
-    padding: 5px 8px 4px;
-    border-top-width: 2px;
+    padding: 8px 10px 8px;
+    border-top-width: 3px;
 }
 
 .outlook-kpi-compact .kpi-label {
-    margin-bottom: 2px;
-    font-size: 0.64em;
-    letter-spacing: 0.03em;
+    margin-bottom: 3px;
+    font-size: 0.66em;
+    letter-spacing: 0.04em;
     line-height: 1.15;
 }
 
 .outlook-kpi-compact .kpi-value {
-    font-size: 1.22em !important;
-    margin-bottom: 1px;
+    font-size: 1.45em !important;
+    margin-bottom: 4px;
     line-height: 1.15;
 }
 
-.outlook-kpi-compact .kpi-unit {
-    font-size: 0.58em;
-    line-height: 1.15;
+/* Delta chips beneath each KPI value */
+.kpi-section-quarterly .kpi-chips {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 4px;
+}
+
+.kpi-section-quarterly .kpi-chip {
+    display: inline-block;
+    font-size: 0.6em;
+    font-weight: 700;
+    line-height: 1.4;
+    padding: 1px 8px;
+    border-radius: 999px;
+    white-space: nowrap;
+    letter-spacing: 0.01em;
+    -webkit-font-smoothing: antialiased;
+}
+
+.kpi-section-quarterly .kpi-chip-pos {
+    color: #157a52;
+    background: rgba(34, 160, 107, 0.12);
+    border: 1px solid rgba(34, 160, 107, 0.22);
+}
+
+.kpi-section-quarterly .kpi-chip-neg {
+    color: #b8323f;
+    background: rgba(226, 85, 99, 0.12);
+    border: 1px solid rgba(226, 85, 99, 0.24);
+}
+
+.kpi-section-quarterly .kpi-chip-neutral {
+    color: #3f5b76;
+    background: rgba(100, 116, 139, 0.10);
+    border: 1px solid rgba(100, 116, 139, 0.20);
 }
 
 /* Quarterly filter containers - Compact */
@@ -173,14 +206,30 @@
     border-radius: 3px;
 }
 
-/* Table cell styling for quarterly data */
-.past-performance-cell {
-    background-color: rgba(76, 175, 80, 0.1);
+/* Table cell styling for quarterly data
+   Actual quarters stay neutral (zebra striping from styles.css);
+   the Q2 FY26 estimate column gets a distinct cyan wash. */
+#quarterlyTable td.past-performance-cell {
+    background-color: transparent;
 }
 
-.projection-cell {
-    background-color: rgba(33, 150, 243, 0.15);
-    font-weight: 600;
+#quarterlyTable tbody tr:nth-child(even) td.past-performance-cell {
+    background-color: #f8fafc;
+}
+
+#quarterlyTable td.projection-cell {
+    background-color: rgba(0, 165, 229, 0.10);
+    border-left: 1px dashed rgba(0, 144, 204, 0.45);
+    color: #04638a;
+    font-weight: 700;
+}
+
+#quarterlyTable tbody tr:nth-child(even) td.projection-cell {
+    background-color: rgba(0, 165, 229, 0.15);
+}
+
+#quarterlyTable tbody tr:hover td.projection-cell {
+    background-color: rgba(0, 165, 229, 0.20);
 }
 
 .total-cell {
@@ -191,22 +240,29 @@
 #quarterlyTable th:first-child,
 #quarterlyTable td:first-child {
     text-align: left;
-    font-weight: 500;
+    font-weight: 600;
+    color: #111827;
 }
 
 #quarterlyTable th {
-    background-color: #1a1a1a;
+    background-color: transparent;
     color: #ffffff;
     padding: 12px 10px;
 }
 
-#quarterlyTable td {
-    padding: 10px;
-    border-bottom: 1px solid #e0e0e0;
+/* Estimate column header echoes the cyan treatment */
+#quarterlyTable th:last-child {
+    background-color: rgba(0, 165, 229, 0.22);
+    color: #e0f6ff;
 }
 
-#quarterlyTable tbody tr:hover {
-    background-color: #f5f5f5;
+#quarterlyTable td {
+    padding: 10px;
+}
+
+#quarterlyTable tbody tr:hover td.past-performance-cell,
+#quarterlyTable tbody tr:hover td:first-child {
+    background-color: #f0f9ff;
 }
 
 /* Slider column width: ../yearly/styles.css .sliders-panel — only relax min-width on wide screens */
@@ -316,24 +372,24 @@
 /* Chart note styling */
 .chart-note {
     font-size: 0.7em;
-    color: #ff9800;
+    color: #b45309;
     font-style: italic;
-    font-weight: bold;
+    font-weight: 600;
     margin: -5px 0 5px 0;
     padding: 0;
     text-align: center;
 }
 
-/* Rule of 40 definition: black (other chart notes stay orange) */
+/* Rule of 40 definition: neutral (other chart notes stay amber) */
 .chart-container:has(#ruleOf40Chart) .chart-note {
-    color: #000000;
+    color: #475569;
 }
 
 .chart-note-bottom {
     font-size: 0.7em;
-    color: #ff9800;
+    color: #b45309;
     font-style: italic;
-    font-weight: bold;
+    font-weight: 600;
     margin: 5px 0 0 0;
     padding: 0;
     text-align: center;
