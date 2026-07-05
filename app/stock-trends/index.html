@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Stock trend analysis: Bollinger Bands, Supertrend, Minervini Trend Template, RSI, DMI/ADX, squeeze momentum — demo signals and segment heat map.">
+  <title>Stock Trend Analysis</title>
+  <link rel="stylesheet" href="styles.css?v=2">
+</head>
+<body>
+  <header class="app-header">
+    <h1>Stock Trend Analysis</h1>
+    <p class="sub">
+      Daily charts aligned with Bollinger Bands (20,2), Supertrend (10, HL2, 3), RSI (14) + signal,
+      DMI/ADX (14), and squeeze momentum (20,2 / 20,1.5). Buy/Sell markers follow Supertrend regime changes
+      and highlighted pullback tests of the lower band in uptrends — for education only, not investment advice.
+    </p>
+  </header>
+
+  <div class="layout">
+    <aside class="sidebar">
+      <div class="controls">
+        <label for="symbol-select">Symbol</label>
+        <select id="symbol-select" aria-label="Stock symbol"></select>
+      </div>
+
+      <h2>Trend Template</h2>
+      <p style="font-size:0.8rem;color:var(--muted);margin:0 0 10px;">
+        Score <span id="template-score" style="color:var(--accent);font-weight:800;">—</span>
+      </p>
+      <div id="template-checklist" class="template-grid"></div>
+
+      <h2>Why buy / Why sell</h2>
+      <p style="font-size:0.75rem;color:var(--muted);margin:0 0 8px;">Context from the latest bar (text summary).</p>
+      <p style="font-size:0.8rem;margin:0 0 10px;"><strong style="color:var(--buy);">Buy-side</strong></p>
+      <p id="narr-buy" style="font-size:0.82rem;margin:0 0 14px;color:#cbd5e1;">—</p>
+      <p style="font-size:0.8rem;margin:0 0 8px;"><strong style="color:var(--sell);">Sell / trim</strong></p>
+      <p id="narr-sell" style="font-size:0.82rem;margin:0;color:#cbd5e1;">—</p>
+    </aside>
+
+    <main class="main">
+      <div id="na-banner" class="na-banner"></div>
+      <div class="status-bar" id="status-text">Loading…</div>
+
+      <div class="chart-stack">
+        <div class="chart-card">
+          <h3>Price · Bollinger · Supertrend · Signals</h3>
+          <canvas id="chart-price" height="260"></canvas>
+        </div>
+        <div class="chart-card compact">
+          <h3>RSI 14 + signal</h3>
+          <canvas id="chart-rsi" height="120"></canvas>
+        </div>
+        <div class="chart-card compact">
+          <h3>DMI (+DI / −DI / ADX)</h3>
+          <canvas id="chart-dmi" height="120"></canvas>
+        </div>
+        <div class="chart-card compact">
+          <h3>Squeeze momentum</h3>
+          <canvas id="chart-squeeze" height="120"></canvas>
+          <p id="squeeze-note" style="font-size:0.72rem;color:var(--muted);margin:8px 0 0;"></p>
+        </div>
+      </div>
+
+      <section class="heatmap-section">
+        <h2>Matrix heat map · Trend Template</h2>
+        <p class="lead">
+          Rows are symbols; columns are the nine Trend Template checks (1 = pass, 0 = fail).
+          <strong>Σ</strong> is the total count (0–9). Hover column headers for full names. Educational only.
+        </p>
+        <div class="segment-pills">
+          <span class="pill">Mega-cap Technology</span>
+          <span class="pill">Semiconductors</span>
+          <span class="pill">Healthcare Leaders</span>
+          <span class="pill">Financials</span>
+          <span class="pill">Consumer / Retail</span>
+        </div>
+        <div class="matrix-wrap heatmap-table-wrap">
+          <table class="matrix-heatmap" id="heatmap-matrix">
+            <thead id="heatmap-head"></thead>
+            <tbody id="heatmap-body">
+              <tr><td colspan="11">Loading universe…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <footer class="site-footer">
+    Educational demo · Data via Yahoo Finance (may require CORS relay on static hosts).
+    <a href="../index.html">SOFI hub</a>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script src="indicators.js?v=1"></script>
+  <script src="analysis.js?v=2"></script>
+  <script src="universe.js?v=1"></script>
+  <script src="data-service.js?v=2"></script>
+  <script src="app.js?v=2"></script>
+</body>
+</html>

@@ -1,12 +1,47 @@
-// SOFI Stock - FY25 Actuals & Q1 2026 Quarterly Projection Model
-// Q1-Q4 2025 Actuals, Q1 2026 Projections with Interactive Sliders
-// Updated with Q4 2025 Earnings (reported Jan 30, 2026)
+// SOFI Stock - FY25 Actuals, Q1 2026 Actuals & Q2 2026 Estimate Model
+// Q1-Q4 2025 Actuals, Q1 2026 Actuals (Apr 29, 2026), Q2 2026 Estimate with Sliders
+// Updated with Q1 2026 Earnings (reported Apr 29, 2026)
 
 // Base stock price
 const BASE_DATA = {
     currentPrice: null,
     sharesOutstanding: 1.26 // Billions
 };
+
+// ============================================
+// CHART PALETTE (presentation only)
+// ============================================
+// Refined blues/teals/greens anchored on SOFI cyan #00A5E5.
+// Actual quarters get solid fills; the Q2 FY26 estimate gets a light
+// translucent fill + outline so it reads as "projected" at a glance.
+const QCOLORS = {
+    cyan: '#00A5E5',
+    cyanFill: 'rgba(0, 165, 229, 0.82)',
+    cyanProjFill: 'rgba(0, 165, 229, 0.20)',
+    green: '#22A06B',
+    greenFill: 'rgba(34, 160, 107, 0.80)',
+    greenProjFill: 'rgba(34, 160, 107, 0.20)',
+    navy: '#173A5E',
+    navyFill: 'rgba(23, 58, 94, 0.88)',
+    teal: '#0FA3A3',
+    tealFill: 'rgba(15, 163, 163, 0.80)',
+    amber: '#F59E0B',
+    amberFill: 'rgba(245, 158, 11, 0.82)',
+    rose: '#E25563',
+    roseFill: 'rgba(226, 85, 99, 0.78)',
+    periwinkle: '#7B8CDE',
+    periwinkleFill: 'rgba(123, 140, 222, 0.80)',
+    slate: '#94A3B8',
+    slateFill: 'rgba(148, 163, 184, 0.72)'
+};
+
+// Per-bar styling helpers: actual vs projected quarters
+function periodFills(data, actualFill, projFill) {
+    return data.map(d => (d.period === 'actual' ? actualFill : projFill));
+}
+function periodBorderWidths(data) {
+    return data.map(d => (d.period === 'actual' ? 0 : 2));
+}
 
 // ============================================
 // FY25 QUARTERLY ACTUALS (Q1-Q4 2025)
@@ -104,6 +139,32 @@ const QUARTERLY_ACTUALS = {
 };
 
 // ============================================
+// Q1 2026 ACTUALS (reported Apr 29, 2026)
+// ============================================
+const Q1_2026_ACTUAL = {
+    quarter: 'Q1 FY26',
+    // Segment GAAP net revenue (10-Q / earnings release)
+    lending: 642,
+    techPlatform: 75,
+    financialServices: 429,
+    netRevenue: 1100,       // GAAP total net revenue $1,100.4M
+    salesMarketing: 336,    // $335.5M
+    gAndA: 198,             // $197.6M
+    technology: 188,        // Technology & product development $187.7M
+    costOfOps: 171,         // $171.1M
+    pretaxIncome: 200,      // $199.6M
+    netIncome: 167,         // GAAP $166.7M
+    ebitda: 340,            // Adjusted EBITDA $339.9M
+    eps: 12,                // Diluted $0.12
+    members: 14.7,          // Record 14.7M (+1.05M net new)
+    products: 22.2,         // Record 22.2M (+1.8M)
+    netMargin: 15.2,
+    ebitdaMargin: 30.9,     // Adj. EBITDA / GAAP revenue
+    salesMarketingPct: 30.5,
+    period: 'actual'
+};
+
+// ============================================
 // REFERENCE DATA FOR YoY & QoQ CALCULATIONS
 // ============================================
 
@@ -133,7 +194,7 @@ const Q1_2025_REF = {
     financialServices: 303
 };
 
-// Q4 2025 reference for Q1 2026 QoQ calculations
+// Q4 2025 reference (legacy QoQ context)
 const Q4_2025_REF = {
     lending: 499,
     techPlatform: 122,
@@ -141,60 +202,74 @@ const Q4_2025_REF = {
     netRevenue: 1025
 };
 
-/** Rule of 40 history (Q4 21 → Q4 25): adj. net revenue growth % + adj. EBITDA margin % (earnings-style presentation). Q1 26 appended live from model. */
+// Q1 2026 actual reference for Q2 2026 QoQ calculations
+const Q1_2026_REF = {
+    netRevenue: 1100,
+    netIncome: 167,
+    ebitda: 340,
+    lending: 642,
+    techPlatform: 75,
+    financialServices: 429,
+    members: 14.7,
+    products: 22.2
+};
+
+// Q2 2025 reference for Q2 2026 YoY calculations
+const Q2_2025_REF = {
+    netRevenue: 855,
+    netIncome: 97,
+    ebitda: 249.1,
+    lending: 444,
+    techPlatform: 110,
+    financialServices: 363
+};
+
+/** Rule of 40 history (Q4 21 → Q4 25) + Q1 26 actual + Q2 26 estimate from sliders. */
 const RULE_OF_40_LABELS = [
     'Q4 21', 'Q1 22', 'Q2 22', 'Q3 22', 'Q4 22',
     'Q1 23', 'Q2 23', 'Q3 23', 'Q4 23',
     'Q1 24', 'Q2 24', 'Q3 24', 'Q4 24',
     'Q1 25', 'Q2 25', 'Q3 25', 'Q4 25',
-    'Q1 2026 (Projected)'
+    'Q1 26', 'Q2 26 (Est)'
 ];
 const RULE_OF_40_ADJ_REV_GROWTH_HIST = [
-    54, 49, 50, 51, 58, 43, 37, 27, 34, 26, 22, 30, 24, 33, 44, 38, 37
+    54, 49, 50, 51, 58, 43, 37, 27, 34, 26, 22, 30, 24, 33, 44, 38, 37,
+    41  // Q1 26 actual: adj. net revenue +41% YoY (Apr 29, 2026 release)
 ];
 const RULE_OF_40_ADJ_EBITDA_MARGIN_HIST = [
-    2, 3, 6, 11, 16, 16, 16, 18, 30, 25, 23, 27, 27, 27, 29, 29, 31
+    2, 3, 6, 11, 16, 16, 16, 18, 30, 25, 23, 27, 27, 27, 29, 29, 31,
+    31  // Q1 26 actual: adj. EBITDA margin ~31%
 ];
 
 // ============================================
-// Q1 2026 PROJECTION DEFAULTS
+// Q2 2026 ESTIMATE DEFAULTS
 // ============================================
-// Based on ~8.1% QoQ growth from Q4 2025 and 2026 guidance:
-// - Overall: 8.1% QoQ ($1,025M → $1,108M), ~30% annual growth pace
-// - Lending: ~flat QoQ vs Q4 (offset to hold total rev)
-// - Financial Services: lower QoQ% vs prior draft (offset to hold total rev)
-// - Tech Platform: +2% QoQ vs Q4 ($122M → $124M); lending/FS adjusted so total rev unchanged
-// - Segment split $502M / $124M / $488M: lending QoQ ~+1% (chart), FS ~+7% QoQ, tech +2% rounded
-// - Members: 1.2M net new in Q1 2026 (14.9M total vs Q4 FY25 13.7M)
-// - Margins: Higher investment cycle (net margin 17.0% → 15.9%)
+// Q2 FY26 estimate anchored to ~8% QoQ net revenue vs Q1 FY26 actual ($1,100M → $1,188M).
+// Also ~39% YoY vs Q2 FY25 ($855M). Margins held at ~30% EBITDA, ~12.5% net income.
+// Segments scaled proportionally from prior Q2 default mix; members/products follow FY25 Q1→Q2 seasonality.
 
-const Q1_2026_DEFAULTS = {
-    // Revenue segments ($1,114M total: 502+124+488) — QoQ chart: lending ~+1%, tech +2%, FS ~+7%
-    lending: 502,          // vs Q4 $499M (~+1% QoQ displayed)
-    techPlatform: 124,     // +2% QoQ vs Q4 $122M (rounded on chart)
-    financialServices: 488, // vs Q4 $457M (~+7% QoQ displayed)
-    netRevenue: 1114,      // unchanged total vs Q4 $1,025M (+8.7% QoQ overall)
-    // Expenses (higher investment in growth)
-    salesMarketing: 345,   // +15.0% QoQ from Q4 $300M
-    gAndA: 195,            // +2.6% QoQ from Q4 $190M
-    technology: 183,       // +4.6% QoQ from Q4 $175M
-    costOfOps: 171,        // +6.9% QoQ from Q4 $160M
-    // Income
-    pretaxIncome: 209,
-    netIncome: 192,
-    ebitda: 340,
-    eps: 15,               // cents (192M / 1.26B shares = 15.2¢)
-    // Operational
-    members: 14.9,         // +1.2M net new vs Q4 FY25 13.7M
-    products: 22.0,        // +8.9% QoQ from Q4 20.2M
-    // Margins
-    netMargin: 17.2,
-    ebitdaMargin: 30.5,
-    salesMarketingPct: 31.0
+const Q2_2026_DEFAULTS = {
+    lending: 666,
+    techPlatform: 78,
+    financialServices: 444,
+    netRevenue: 1188,
+    salesMarketing: 362,
+    gAndA: 214,
+    technology: 203,
+    costOfOps: 185,
+    pretaxIncome: 162,
+    netIncome: 149,
+    ebitda: 356,
+    eps: 12,
+    members: 15.6,          // ~+0.9M net new vs Q1 14.7M
+    products: 23.5,         // ~+1.3M vs Q1 22.2M
+    netMargin: 12.5,
+    ebitdaMargin: 30.0,
+    salesMarketingPct: 30.5
 };
 
-// Current Q1 2026 values (modified by sliders)
-let Q1_2026_CURRENT = { ...Q1_2026_DEFAULTS };
+// Current Q2 2026 values (modified by sliders)
+let Q2_2026_CURRENT = { ...Q2_2026_DEFAULTS };
 
 // ============================================
 // CHART INSTANCES
@@ -218,7 +293,7 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 // ============================================
-// SLIDERS - Q1 2026 Projections
+// SLIDERS - Q2 2026 Estimate
 // ============================================
 function initializeSliders() {
     const container = document.getElementById('quarterlyControlsContainer');
@@ -230,24 +305,24 @@ function initializeSliders() {
         { 
             id: 'lending', 
             label: 'Lending Revenue', 
-            min: 420, max: 620, step: 5, 
-            default: Q1_2026_DEFAULTS.lending,
+            min: 520, max: 720, step: 5, 
+            default: Q2_2026_DEFAULTS.lending,
             format: (v) => '$' + v + 'M',
             impacts: ['Net Revenue', 'Net Margin %']
         },
         { 
             id: 'techPlatform', 
             label: 'Tech Platform', 
-            min: 100, max: 160, step: 1, 
-            default: Q1_2026_DEFAULTS.techPlatform,
+            min: 60, max: 130, step: 1, 
+            default: Q2_2026_DEFAULTS.techPlatform,
             format: (v) => '$' + v + 'M',
             impacts: ['Net Revenue', 'Net Margin %']
         },
         { 
             id: 'financialServices', 
             label: 'Financial Services', 
-            min: 380, max: 560, step: 5, 
-            default: Q1_2026_DEFAULTS.financialServices,
+            min: 350, max: 520, step: 5, 
+            default: Q2_2026_DEFAULTS.financialServices,
             format: (v) => '$' + v + 'M',
             impacts: ['Net Revenue', 'Net Margin %']
         },
@@ -255,23 +330,23 @@ function initializeSliders() {
             id: 'salesMarketing', 
             label: 'Sales & Marketing', 
             min: 240, max: 380, step: 5, 
-            default: Q1_2026_DEFAULTS.salesMarketing,
+            default: Q2_2026_DEFAULTS.salesMarketing,
             format: (v) => '$' + v + 'M',
             impacts: ['S&M % of Rev']
         },
         { 
             id: 'members', 
             label: 'Members', 
-            min: 13.8, max: 16.0, step: 0.1, 
-            default: Q1_2026_DEFAULTS.members,
+            min: 14.8, max: 17.0, step: 0.1, 
+            default: Q2_2026_DEFAULTS.members,
             format: (v) => parseFloat(v).toFixed(1) + 'M',
             impacts: ['YoY Growth %']
         },
         { 
             id: 'products', 
             label: 'Products', 
-            min: 20.5, max: 24.0, step: 0.1, 
-            default: Q1_2026_DEFAULTS.products,
+            min: 22.0, max: 26.0, step: 0.1, 
+            default: Q2_2026_DEFAULTS.products,
             format: (v) => parseFloat(v).toFixed(1) + 'M',
             impacts: ['YoY Growth %']
         }
@@ -344,7 +419,7 @@ function initializeSliders() {
             }
             
             updateSliderImpact(config);
-            updateQ1_2026FromSliders();
+            updateQ2_2026FromSliders();
         });
     });
 }
@@ -363,93 +438,93 @@ function updateSliderImpact(config) {
     let impactHTML = '';
     
     if (config.id === 'lending') {
-        const yoy = ((lending - Q1_2025_REF.lending) / Q1_2025_REF.lending * 100).toFixed(0);
-        const qoq = ((lending - Q4_2025_REF.lending) / Q4_2025_REF.lending * 100).toFixed(0);
+        const yoy = ((lending - Q2_2025_REF.lending) / Q2_2025_REF.lending * 100).toFixed(0);
+        const qoq = ((lending - Q1_2026_REF.lending) / Q1_2026_REF.lending * 100).toFixed(0);
         impactHTML = `<span class="impact-item">YoY: <strong>+${yoy}%</strong></span>
                       <span class="impact-item">QoQ: <strong>${qoq >= 0 ? '+' : ''}${qoq}%</strong></span>`;
     } else if (config.id === 'techPlatform') {
-        const yoy = ((techPlatform - Q1_2025_REF.techPlatform) / Q1_2025_REF.techPlatform * 100).toFixed(0);
-        const qoq = ((techPlatform - Q4_2025_REF.techPlatform) / Q4_2025_REF.techPlatform * 100).toFixed(0);
-        impactHTML = `<span class="impact-item">YoY: <strong>+${yoy}%</strong></span>
+        const yoy = ((techPlatform - Q2_2025_REF.techPlatform) / Q2_2025_REF.techPlatform * 100).toFixed(0);
+        const qoq = ((techPlatform - Q1_2026_REF.techPlatform) / Q1_2026_REF.techPlatform * 100).toFixed(0);
+        impactHTML = `<span class="impact-item">YoY: <strong>${yoy >= 0 ? '+' : ''}${yoy}%</strong></span>
                       <span class="impact-item">QoQ: <strong>${qoq >= 0 ? '+' : ''}${qoq}%</strong></span>`;
     } else if (config.id === 'financialServices') {
-        const yoy = ((financialServices - Q1_2025_REF.financialServices) / Q1_2025_REF.financialServices * 100).toFixed(0);
-        const qoq = ((financialServices - Q4_2025_REF.financialServices) / Q4_2025_REF.financialServices * 100).toFixed(0);
+        const yoy = ((financialServices - Q2_2025_REF.financialServices) / Q2_2025_REF.financialServices * 100).toFixed(0);
+        const qoq = ((financialServices - Q1_2026_REF.financialServices) / Q1_2026_REF.financialServices * 100).toFixed(0);
         impactHTML = `<span class="impact-item">YoY: <strong>+${yoy}%</strong></span>
                       <span class="impact-item">QoQ: <strong>${qoq >= 0 ? '+' : ''}${qoq}%</strong></span>`;
     } else if (config.id === 'salesMarketing') {
         const smPct = (salesMarketing / netRevenue * 100).toFixed(1);
         impactHTML = `<span class="impact-item">S&M %: <strong>${smPct}%</strong> of Rev</span>`;
     } else if (config.id === 'members') {
-        const q1Members = 10.9; // Q1 FY25
-        const q4Members = QUARTERLY_ACTUALS.Q4.members;
-        const yoy = ((members - q1Members) / q1Members * 100).toFixed(1);
-        const netNewVsQ4 = (members - q4Members).toFixed(1);
-        impactHTML = `<span class="impact-item">YoY: <strong>+${yoy}%</strong> vs Q1 FY25</span>
-                      <span class="impact-item">Net new vs Q4: <strong>+${netNewVsQ4}M</strong></span>`;
+        const q2Members = Q2_2025_REF.members || QUARTERLY_ACTUALS.Q2.members;
+        const q1Members = Q1_2026_REF.members;
+        const yoy = ((members - q2Members) / q2Members * 100).toFixed(1);
+        const netNewVsQ1 = (members - q1Members).toFixed(1);
+        impactHTML = `<span class="impact-item">YoY: <strong>+${yoy}%</strong> vs Q2 FY25</span>
+                      <span class="impact-item">Net new vs Q1: <strong>+${netNewVsQ1}M</strong></span>`;
     } else if (config.id === 'products') {
-        const q1Products = 15.9; // Q1 FY25
+        const q2Products = QUARTERLY_ACTUALS.Q2.products;
         const products = parseFloat(document.getElementById('productsSlider').value);
-        const yoy = ((products - q1Products) / q1Products * 100).toFixed(1);
-        impactHTML = `<span class="impact-item">YoY: <strong>+${yoy}%</strong> vs Q1 FY25</span>`;
+        const yoy = ((products - q2Products) / q2Products * 100).toFixed(1);
+        impactHTML = `<span class="impact-item">YoY: <strong>+${yoy}%</strong> vs Q2 FY25</span>`;
     }
     
     impactEl.innerHTML = impactHTML;
 }
 
-function updateQ1_2026FromSliders() {
-    Q1_2026_CURRENT.lending = parseFloat(document.getElementById('lendingSlider').value);
-    Q1_2026_CURRENT.techPlatform = parseFloat(document.getElementById('techPlatformSlider').value);
-    Q1_2026_CURRENT.financialServices = parseFloat(document.getElementById('financialServicesSlider').value);
-    Q1_2026_CURRENT.salesMarketing = parseFloat(document.getElementById('salesMarketingSlider').value);
-    Q1_2026_CURRENT.members = parseFloat(document.getElementById('membersSlider').value);
-    Q1_2026_CURRENT.products = parseFloat(document.getElementById('productsSlider').value);
+function updateQ2_2026FromSliders() {
+    Q2_2026_CURRENT.lending = parseFloat(document.getElementById('lendingSlider').value);
+    Q2_2026_CURRENT.techPlatform = parseFloat(document.getElementById('techPlatformSlider').value);
+    Q2_2026_CURRENT.financialServices = parseFloat(document.getElementById('financialServicesSlider').value);
+    Q2_2026_CURRENT.salesMarketing = parseFloat(document.getElementById('salesMarketingSlider').value);
+    Q2_2026_CURRENT.members = parseFloat(document.getElementById('membersSlider').value);
+    Q2_2026_CURRENT.products = parseFloat(document.getElementById('productsSlider').value);
     
     // Calculate Net Revenue from segments
-    Q1_2026_CURRENT.netRevenue = Q1_2026_CURRENT.lending + Q1_2026_CURRENT.techPlatform + Q1_2026_CURRENT.financialServices;
+    Q2_2026_CURRENT.netRevenue = Q2_2026_CURRENT.lending + Q2_2026_CURRENT.techPlatform + Q2_2026_CURRENT.financialServices;
     
     // Calculate revenue change ratio for scaling metrics
-    const revenueRatio = Q1_2026_CURRENT.netRevenue / Q1_2026_DEFAULTS.netRevenue;
+    const revenueRatio = Q2_2026_CURRENT.netRevenue / Q2_2026_DEFAULTS.netRevenue;
     
     // Auto-calculate Net Income (maintaining default margin)
-    const defaultNetMargin = Q1_2026_DEFAULTS.netIncome / Q1_2026_DEFAULTS.netRevenue;
-    const calculatedNetIncome = Math.round(Q1_2026_CURRENT.netRevenue * defaultNetMargin);
-    Q1_2026_CURRENT.netIncome = calculatedNetIncome;
+    const defaultNetMargin = Q2_2026_DEFAULTS.netIncome / Q2_2026_DEFAULTS.netRevenue;
+    const calculatedNetIncome = Math.round(Q2_2026_CURRENT.netRevenue * defaultNetMargin);
+    Q2_2026_CURRENT.netIncome = calculatedNetIncome;
     
     // Auto-calculate EPS
-    const epsPerMillion = Q1_2026_DEFAULTS.eps / Q1_2026_DEFAULTS.netIncome;
-    Q1_2026_CURRENT.eps = Math.round(calculatedNetIncome * epsPerMillion);
+    const epsPerMillion = Q2_2026_DEFAULTS.eps / Q2_2026_DEFAULTS.netIncome;
+    Q2_2026_CURRENT.eps = Math.round(calculatedNetIncome * epsPerMillion);
     
     // Auto-calculate EBITDA
-    const defaultEbitdaMargin = Q1_2026_DEFAULTS.ebitda / Q1_2026_DEFAULTS.netRevenue;
-    Q1_2026_CURRENT.ebitda = Math.round(Q1_2026_CURRENT.netRevenue * defaultEbitdaMargin);
+    const defaultEbitdaMargin = Q2_2026_DEFAULTS.ebitda / Q2_2026_DEFAULTS.netRevenue;
+    Q2_2026_CURRENT.ebitda = Math.round(Q2_2026_CURRENT.netRevenue * defaultEbitdaMargin);
     
     // Scale other expenses proportionally
-    Q1_2026_CURRENT.gAndA = Math.round(Q1_2026_DEFAULTS.gAndA * revenueRatio);
-    Q1_2026_CURRENT.technology = Math.round(Q1_2026_DEFAULTS.technology * revenueRatio);
-    Q1_2026_CURRENT.costOfOps = Math.round(Q1_2026_DEFAULTS.costOfOps * revenueRatio);
+    Q2_2026_CURRENT.gAndA = Math.round(Q2_2026_DEFAULTS.gAndA * revenueRatio);
+    Q2_2026_CURRENT.technology = Math.round(Q2_2026_DEFAULTS.technology * revenueRatio);
+    Q2_2026_CURRENT.costOfOps = Math.round(Q2_2026_DEFAULTS.costOfOps * revenueRatio);
     
     // Calculate pretax income
-    Q1_2026_CURRENT.pretaxIncome = Math.round(Q1_2026_CURRENT.netIncome / 0.92);
+    Q2_2026_CURRENT.pretaxIncome = Math.round(Q2_2026_CURRENT.netIncome / 0.92);
     
     // Calculate margins
-    Q1_2026_CURRENT.netMargin = (Q1_2026_CURRENT.netIncome / Q1_2026_CURRENT.netRevenue) * 100;
-    Q1_2026_CURRENT.ebitdaMargin = (Q1_2026_CURRENT.ebitda / Q1_2026_CURRENT.netRevenue) * 100;
-    Q1_2026_CURRENT.salesMarketingPct = (Q1_2026_CURRENT.salesMarketing / Q1_2026_CURRENT.netRevenue) * 100;
+    Q2_2026_CURRENT.netMargin = (Q2_2026_CURRENT.netIncome / Q2_2026_CURRENT.netRevenue) * 100;
+    Q2_2026_CURRENT.ebitdaMargin = (Q2_2026_CURRENT.ebitda / Q2_2026_CURRENT.netRevenue) * 100;
+    Q2_2026_CURRENT.salesMarketingPct = (Q2_2026_CURRENT.salesMarketing / Q2_2026_CURRENT.netRevenue) * 100;
     
     updateModel();
 }
 
 function resetControls() {
-    Q1_2026_CURRENT = { ...Q1_2026_DEFAULTS };
+    Q2_2026_CURRENT = { ...Q2_2026_DEFAULTS };
     
     const sliderResets = [
-        { id: 'lending', value: Q1_2026_DEFAULTS.lending, format: (v) => '$' + v + 'M' },
-        { id: 'techPlatform', value: Q1_2026_DEFAULTS.techPlatform, format: (v) => '$' + v + 'M' },
-        { id: 'financialServices', value: Q1_2026_DEFAULTS.financialServices, format: (v) => '$' + v + 'M' },
-        { id: 'salesMarketing', value: Q1_2026_DEFAULTS.salesMarketing, format: (v) => '$' + v + 'M' },
-        { id: 'members', value: Q1_2026_DEFAULTS.members, format: (v) => parseFloat(v).toFixed(1) + 'M' },
-        { id: 'products', value: Q1_2026_DEFAULTS.products, format: (v) => parseFloat(v).toFixed(1) + 'M' }
+        { id: 'lending', value: Q2_2026_DEFAULTS.lending, format: (v) => '$' + v + 'M' },
+        { id: 'techPlatform', value: Q2_2026_DEFAULTS.techPlatform, format: (v) => '$' + v + 'M' },
+        { id: 'financialServices', value: Q2_2026_DEFAULTS.financialServices, format: (v) => '$' + v + 'M' },
+        { id: 'salesMarketing', value: Q2_2026_DEFAULTS.salesMarketing, format: (v) => '$' + v + 'M' },
+        { id: 'members', value: Q2_2026_DEFAULTS.members, format: (v) => parseFloat(v).toFixed(1) + 'M' },
+        { id: 'products', value: Q2_2026_DEFAULTS.products, format: (v) => parseFloat(v).toFixed(1) + 'M' }
     ];
     
     sliderResets.forEach(config => {
@@ -480,9 +555,10 @@ function getQuarterlyData() {
         { ...QUARTERLY_ACTUALS.Q2 },
         { ...QUARTERLY_ACTUALS.Q3 },
         { ...QUARTERLY_ACTUALS.Q4 },
+        { ...Q1_2026_ACTUAL },
         { 
-            quarter: 'Q1 FY26 (Projected)',
-            ...Q1_2026_CURRENT,
+            quarter: 'Q2 FY26 (Est)',
+            ...Q2_2026_CURRENT,
             period: 'projection'
         }
     ];
@@ -491,27 +567,27 @@ function getQuarterlyData() {
 function updateModel() {
     const data = getQuarterlyData();
     
-    // Q1 2026 projection cards
-    document.getElementById('q1_2026Members').textContent = Q1_2026_CURRENT.members.toFixed(1) + 'M';
-    document.getElementById('q1_2026Revenue').textContent = '$' + Q1_2026_CURRENT.netRevenue.toLocaleString() + 'M';
-    document.getElementById('q1_2026NetIncome').textContent = '$' + Q1_2026_CURRENT.netIncome.toLocaleString() + 'M';
-    document.getElementById('q1_2026EPS').textContent = Q1_2026_CURRENT.eps + '¢';
-    const qoqGrowthNum = ((Q1_2026_CURRENT.netRevenue - Q4_2025_REF.netRevenue) / Q4_2025_REF.netRevenue) * 100;
+    // Q2 2026 estimate KPI cards
+    document.getElementById('q2_2026Members').textContent = Q2_2026_CURRENT.members.toFixed(1) + 'M';
+    document.getElementById('q2_2026Revenue').textContent = '$' + Q2_2026_CURRENT.netRevenue.toLocaleString() + 'M';
+    document.getElementById('q2_2026NetIncome').textContent = '$' + Q2_2026_CURRENT.netIncome.toLocaleString() + 'M';
+    document.getElementById('q2_2026EPS').textContent = Q2_2026_CURRENT.eps + '¢';
+    const qoqGrowthNum = ((Q2_2026_CURRENT.netRevenue - Q1_2026_REF.netRevenue) / Q1_2026_REF.netRevenue) * 100;
     const qoqGrowth = qoqGrowthNum.toFixed(1);
-    const qoqEl = document.getElementById('q1_2026QoQGrowth');
+    const qoqEl = document.getElementById('q2_2026QoQGrowth');
     qoqEl.textContent = (qoqGrowthNum >= 0 ? '+' : '') + qoqGrowth + '%';
-    qoqEl.style.color = qoqGrowthNum >= 0 ? '#4caf50' : '#f44336';
-    document.getElementById('q1_2026EBITDA').textContent = '$' + Q1_2026_CURRENT.ebitda.toLocaleString() + 'M';
+    qoqEl.style.color = qoqGrowthNum >= 0 ? '#1e9e63' : '#e25563';
+    document.getElementById('q2_2026EBITDA').textContent = '$' + Q2_2026_CURRENT.ebitda.toLocaleString() + 'M';
 
-    const q1_25 = QUARTERLY_ACTUALS.Q1;
-    const yoyRevPct = ((Q1_2026_CURRENT.netRevenue - q1_25.netRevenue) / q1_25.netRevenue) * 100;
-    const yoyNiPct = ((Q1_2026_CURRENT.netIncome - q1_25.netIncome) / q1_25.netIncome) * 100;
-    const yoyRevEl = document.getElementById('q1_2026YoYRevenue');
-    const yoyNiEl = document.getElementById('q1_2026YoYNI');
+    const q2_25 = QUARTERLY_ACTUALS.Q2;
+    const yoyRevPct = ((Q2_2026_CURRENT.netRevenue - q2_25.netRevenue) / q2_25.netRevenue) * 100;
+    const yoyNiPct = ((Q2_2026_CURRENT.netIncome - q2_25.netIncome) / q2_25.netIncome) * 100;
+    const yoyRevEl = document.getElementById('q2_2026YoYRevenue');
+    const yoyNiEl = document.getElementById('q2_2026YoYNI');
     yoyRevEl.textContent = (yoyRevPct >= 0 ? '+' : '') + yoyRevPct.toFixed(1) + '%';
-    yoyRevEl.style.color = yoyRevPct >= 0 ? '#4caf50' : '#f44336';
+    yoyRevEl.style.color = yoyRevPct >= 0 ? '#1e9e63' : '#e25563';
     yoyNiEl.textContent = (yoyNiPct >= 0 ? '+' : '') + yoyNiPct.toFixed(1) + '%';
-    yoyNiEl.style.color = yoyNiPct >= 0 ? '#4caf50' : '#f44336';
+    yoyNiEl.style.color = yoyNiPct >= 0 ? '#1e9e63' : '#e25563';
     
     // Update charts
     updateAllCharts(data);
@@ -533,9 +609,8 @@ function updateAllCharts(data) {
     if (revenueChart) {
         revenueChart.data.labels = quarters;
         revenueChart.data.datasets[0].data = data.map(d => d.netRevenue);
-        revenueChart.data.datasets[0].backgroundColor = data.map(d => 
-            d.period === 'actual' ? 'rgba(0, 165, 229, 0.7)' : 'rgba(33, 150, 243, 0.7)'
-        );
+        revenueChart.data.datasets[0].backgroundColor = periodFills(data, QCOLORS.cyanFill, QCOLORS.cyanProjFill);
+        revenueChart.data.datasets[0].borderWidth = periodBorderWidths(data);
         revenueChart.update();
     }
     
@@ -547,9 +622,8 @@ function updateAllCharts(data) {
         netIncomeChart.data.datasets[0].data = data.map((d, i) => 
             i === 3 ? d.netIncome - CHYM_Q4_CONTRIBUTION : d.netIncome
         );
-        netIncomeChart.data.datasets[0].backgroundColor = data.map(d => 
-            d.period === 'actual' ? 'rgba(76, 175, 80, 0.7)' : 'rgba(76, 175, 80, 0.7)'
-        );
+        netIncomeChart.data.datasets[0].backgroundColor = periodFills(data, QCOLORS.greenFill, QCOLORS.greenProjFill);
+        netIncomeChart.data.datasets[0].borderWidth = periodBorderWidths(data);
         // CHYM contribution: only in Q4 (index 3)
         netIncomeChart.data.datasets[1].data = data.map((d, i) => 
             i === 3 ? CHYM_Q4_CONTRIBUTION : 0
@@ -563,6 +637,9 @@ function updateAllCharts(data) {
         segmentChart.data.datasets[0].data = data.map(d => d.lending);
         segmentChart.data.datasets[1].data = data.map(d => d.techPlatform);
         segmentChart.data.datasets[2].data = data.map(d => d.financialServices);
+        segmentChart.data.datasets[0].backgroundColor = periodFills(data, QCOLORS.cyanFill, 'rgba(0, 165, 229, 0.35)');
+        segmentChart.data.datasets[1].backgroundColor = periodFills(data, QCOLORS.periwinkleFill, 'rgba(123, 140, 222, 0.35)');
+        segmentChart.data.datasets[2].backgroundColor = periodFills(data, QCOLORS.greenFill, 'rgba(34, 160, 107, 0.35)');
         segmentChart.update();
     }
     
@@ -582,26 +659,26 @@ function updateAllCharts(data) {
         segmentMixChart.update();
     }
     
-    // Rule of 40: history (Q4 21–Q4 25) + Q1 26 from model (YoY net rev growth + EBITDA margin %)
+    // Rule of 40: history through Q1 26 actual + Q2 26 from model sliders
     if (ruleOf40Chart) {
-        const q1_26_yoyRev =
-            QUARTERLY_ACTUALS.Q1.netRevenue > 0
-                ? ((Q1_2026_CURRENT.netRevenue - QUARTERLY_ACTUALS.Q1.netRevenue) /
-                      QUARTERLY_ACTUALS.Q1.netRevenue) *
+        const q2_26_yoyRev =
+            QUARTERLY_ACTUALS.Q2.netRevenue > 0
+                ? ((Q2_2026_CURRENT.netRevenue - QUARTERLY_ACTUALS.Q2.netRevenue) /
+                      QUARTERLY_ACTUALS.Q2.netRevenue) *
                   100
                 : 0;
-        const q1_26_ebitdaM =
-            Q1_2026_CURRENT.netRevenue > 0
-                ? (Q1_2026_CURRENT.ebitda / Q1_2026_CURRENT.netRevenue) * 100
+        const q2_26_ebitdaM =
+            Q2_2026_CURRENT.netRevenue > 0
+                ? (Q2_2026_CURRENT.ebitda / Q2_2026_CURRENT.netRevenue) * 100
                 : 0;
-        const rev = [...RULE_OF_40_ADJ_REV_GROWTH_HIST, q1_26_yoyRev];
-        const ebitdaM = [...RULE_OF_40_ADJ_EBITDA_MARGIN_HIST, q1_26_ebitdaM];
+        const rev = [...RULE_OF_40_ADJ_REV_GROWTH_HIST, q2_26_yoyRev];
+        const ebitdaM = [...RULE_OF_40_ADJ_EBITDA_MARGIN_HIST, q2_26_ebitdaM];
         const total = rev.map((r, i) => r + ebitdaM[i]);
         ruleOf40Chart.data.labels = RULE_OF_40_LABELS;
         ruleOf40Chart.data.datasets[0].data = rev;
         ruleOf40Chart.data.datasets[1].data = ebitdaM;
         ruleOf40Chart.data.datasets[2].data = total;
-        ruleOf40Chart.$rule40Meta = { rev, ebitdaM, total, q1_26_projected: true };
+        ruleOf40Chart.$rule40Meta = { rev, ebitdaM, total, q2_26_projected: true };
         ruleOf40Chart.update();
     }
     
@@ -609,9 +686,8 @@ function updateAllCharts(data) {
     if (epsChart) {
         epsChart.data.labels = quarters;
         epsChart.data.datasets[0].data = data.map(d => d.eps);
-        epsChart.data.datasets[0].backgroundColor = data.map(d => 
-            d.period === 'actual' ? 'rgba(0, 165, 229, 0.7)' : 'rgba(33, 150, 243, 0.7)'
-        );
+        epsChart.data.datasets[0].backgroundColor = periodFills(data, QCOLORS.cyanFill, QCOLORS.cyanProjFill);
+        epsChart.data.datasets[0].borderWidth = periodBorderWidths(data);
         epsChart.update();
     }
     
@@ -650,34 +726,36 @@ function updateAllCharts(data) {
     if (ebitdaChart) {
         ebitdaChart.data.labels = quarters;
         ebitdaChart.data.datasets[0].data = data.map(d => d.ebitda);
-        ebitdaChart.data.datasets[0].backgroundColor = data.map(d => 
-            d.period === 'actual' ? 'rgba(0, 165, 229, 0.7)' : 'rgba(33, 150, 243, 0.7)'
-        );
+        ebitdaChart.data.datasets[0].backgroundColor = periodFills(data, QCOLORS.tealFill, 'rgba(15, 163, 163, 0.20)');
+        ebitdaChart.data.datasets[0].borderWidth = periodBorderWidths(data);
         ebitdaChart.update();
     }
     
-    // Segment Growth QoQ Chart (4 transitions: Q1→Q2, Q2→Q3, Q3→Q4, Q4→Q1'26)
+    // Segment Growth QoQ Chart (5 transitions through Q1'26→Q2'26)
     if (segmentGrowthChart) {
         const lendingGrowth = [
             ((data[1].lending - data[0].lending) / data[0].lending * 100),
             ((data[2].lending - data[1].lending) / data[1].lending * 100),
             ((data[3].lending - data[2].lending) / data[2].lending * 100),
-            ((data[4].lending - data[3].lending) / data[3].lending * 100)
+            ((data[4].lending - data[3].lending) / data[3].lending * 100),
+            ((data[5].lending - data[4].lending) / data[4].lending * 100)
         ];
         const techGrowth = [
             ((data[1].techPlatform - data[0].techPlatform) / data[0].techPlatform * 100),
             ((data[2].techPlatform - data[1].techPlatform) / data[1].techPlatform * 100),
             ((data[3].techPlatform - data[2].techPlatform) / data[2].techPlatform * 100),
-            ((data[4].techPlatform - data[3].techPlatform) / data[3].techPlatform * 100)
+            ((data[4].techPlatform - data[3].techPlatform) / data[3].techPlatform * 100),
+            ((data[5].techPlatform - data[4].techPlatform) / data[4].techPlatform * 100)
         ];
         const finServGrowth = [
             ((data[1].financialServices - data[0].financialServices) / data[0].financialServices * 100),
             ((data[2].financialServices - data[1].financialServices) / data[1].financialServices * 100),
             ((data[3].financialServices - data[2].financialServices) / data[2].financialServices * 100),
-            ((data[4].financialServices - data[3].financialServices) / data[3].financialServices * 100)
+            ((data[4].financialServices - data[3].financialServices) / data[3].financialServices * 100),
+            ((data[5].financialServices - data[4].financialServices) / data[4].financialServices * 100)
         ];
         
-        segmentGrowthChart.data.labels = ['Q1→Q2', 'Q2→Q3', 'Q3→Q4', "Q4→Q1'26"];
+        segmentGrowthChart.data.labels = ['Q1→Q2', 'Q2→Q3', 'Q3→Q4', "Q4→Q1'26", "Q1→Q2'26"];
         segmentGrowthChart.data.datasets[0].data = lendingGrowth;
         segmentGrowthChart.data.datasets[1].data = techGrowth;
         segmentGrowthChart.data.datasets[2].data = finServGrowth;
@@ -727,8 +805,11 @@ function updateQuarterlyTable(data) {
             rowHTML += `<td class="past-performance-cell">${formatValue(data[i][row.key], row.format)}</td>`;
         }
         
-        // Q1 FY26 (projection, index 4)
-        rowHTML += `<td class="projection-cell">${formatValue(data[4][row.key], row.format)}</td>`;
+        // Q1 FY26 actual (index 4)
+        rowHTML += `<td class="past-performance-cell">${formatValue(data[4][row.key], row.format)}</td>`;
+        
+        // Q2 FY26 estimate (index 5)
+        rowHTML += `<td class="projection-cell">${formatValue(data[5][row.key], row.format)}</td>`;
         
         tr.innerHTML = rowHTML;
         tbody.appendChild(tr);
@@ -747,17 +828,18 @@ function updateAssumptions(data) {
     const fy25AvgMargin = (fy25NetIncome / fy25Revenue * 100).toFixed(1);
     
     const q1_26 = data[4];
-    const q1_25 = data[0];
-    const yoyRevGrowth = ((q1_26.netRevenue - q1_25.netRevenue) / q1_25.netRevenue * 100).toFixed(1);
-    const yoyNIGrowth = ((q1_26.netIncome - q1_25.netIncome) / q1_25.netIncome * 100).toFixed(0);
+    const q2_26 = data[5];
+    const q2_25 = data[1];
+    const yoyRevGrowth = ((q2_26.netRevenue - q2_25.netRevenue) / q2_25.netRevenue * 100).toFixed(1);
+    const yoyNIGrowth = ((q2_26.netIncome - q2_25.netIncome) / q2_25.netIncome * 100).toFixed(0);
     
     content.innerHTML = `
         <ul class="assumptions-list">
             <li><strong>FY25 Actuals:</strong> Revenue $${fy25Revenue.toLocaleString()}M, Net Income $${fy25NetIncome.toLocaleString()}M, Avg Net Margin ${fy25AvgMargin}% — Record $1B+ quarterly revenue in Q4</li>
-            <li><strong>Q4 FY25 Highlights:</strong> Revenue $${data[3].netRevenue}M (+${((data[3].netRevenue - FY2024_QUARTERS.Q4.netRevenue) / FY2024_QUARTERS.Q4.netRevenue * 100).toFixed(0)}% YoY), Record 1M+ new members, 13.7M total members, Fee-based revenue $443M (+53% YoY)</li>
-            <li><strong>Q1 FY26 Projection:</strong> Revenue $${q1_26.netRevenue}M (+${yoyRevGrowth}% YoY), Net Income $${q1_26.netIncome}M (+${yoyNIGrowth}% YoY)</li>
-            <li><strong>2026 Guidance:</strong> ~$4.655B adjusted net revenue (~30% growth), Lending +23%, Financial Services +40%+, Tech Platform +20%</li>
-            <li><strong>Growth Drivers:</strong> Loan Platform Business at $15B annualized originations, crypto/blockchain launch, 40% cross-buy rate, 9.6% unaided brand awareness</li>
+            <li><strong>Q1 FY26 Actuals (Apr 29, 2026):</strong> Revenue $${q1_26.netRevenue}M (+${((q1_26.netRevenue - data[0].netRevenue) / data[0].netRevenue * 100).toFixed(0)}% YoY), Net Income $${q1_26.netIncome}M (+${((q1_26.netIncome - data[0].netIncome) / data[0].netIncome * 100).toFixed(0)}% YoY), 14.7M members, Rule of 40 score 72</li>
+            <li><strong>Q2 FY26 Estimate:</strong> Revenue $${q2_26.netRevenue}M (+${((q2_26.netRevenue - q1_26.netRevenue) / q1_26.netRevenue * 100).toFixed(1)}% QoQ vs Q1 FY26 actual, +${yoyRevGrowth}% YoY vs Q2 FY25), Net Income $${q2_26.netIncome}M (+${yoyNIGrowth}% YoY) — ~30% EBITDA margin, ~12–13% adj. NI margin</li>
+            <li><strong>2026 Full-Year Guidance (reiterated):</strong> ~$4.655B adjusted net revenue, ~$1.6B adjusted EBITDA, ~$825M adjusted net income, ~60¢ adj. EPS, 30%+ member growth</li>
+            <li><strong>Q2 2026 Model Default:</strong> ~8% QoQ revenue vs Q1 FY26 actual ($1,100M), ~30% adjusted EBITDA margin, ~12–13% adjusted net income margin</li>
         </ul>
     `;
 }
@@ -835,13 +917,13 @@ function initializeCharts() {
         Chart.register(ChartDataLabels);
     }
     
-    // YoY reference arrays: indices 0-3 = FY24 quarters, index 4 = Q1 FY25
-    const yoyRevenueRefs = [FY2024_QUARTERS.Q1.netRevenue, FY2024_QUARTERS.Q2.netRevenue, FY2024_QUARTERS.Q3.netRevenue, FY2024_QUARTERS.Q4.netRevenue, Q1_2025_REF.netRevenue];
-    const yoyNetIncomeRefs = [FY2024_QUARTERS.Q1.netIncome, FY2024_QUARTERS.Q2.netIncome, FY2024_QUARTERS.Q3.netIncome, FY2024_QUARTERS.Q4.netIncome, Q1_2025_REF.netIncome];
-    const yoyEbitdaRefs = [FY2024_QUARTERS.Q1.ebitda, FY2024_QUARTERS.Q2.ebitda, FY2024_QUARTERS.Q3.ebitda, FY2024_QUARTERS.Q4.ebitda, Q1_2025_REF.ebitda];
+    // YoY reference arrays: indices 0-3 = FY24 quarters, index 4 = Q1 FY25, index 5 = Q2 FY25
+    const yoyRevenueRefs = [FY2024_QUARTERS.Q1.netRevenue, FY2024_QUARTERS.Q2.netRevenue, FY2024_QUARTERS.Q3.netRevenue, FY2024_QUARTERS.Q4.netRevenue, Q1_2025_REF.netRevenue, Q2_2025_REF.netRevenue];
+    const yoyNetIncomeRefs = [FY2024_QUARTERS.Q1.netIncome, FY2024_QUARTERS.Q2.netIncome, FY2024_QUARTERS.Q3.netIncome, FY2024_QUARTERS.Q4.netIncome, Q1_2025_REF.netIncome, Q2_2025_REF.netIncome];
+    const yoyEbitdaRefs = [FY2024_QUARTERS.Q1.ebitda, FY2024_QUARTERS.Q2.ebitda, FY2024_QUARTERS.Q3.ebitda, FY2024_QUARTERS.Q4.ebitda, Q1_2025_REF.ebitda, Q2_2025_REF.ebitda];
     
-    // Segment YoY refs: indices 0-3 = FY24, index 4 = Q1 FY25
-    const yoySegmentRefs = [FY2024_SEGMENT_DATA.Q1, FY2024_SEGMENT_DATA.Q2, FY2024_SEGMENT_DATA.Q3, FY2024_SEGMENT_DATA.Q4, Q1_2025_REF];
+    // Segment YoY refs: indices 0-3 = FY24, index 4 = Q1 FY25, index 5 = Q2 FY25
+    const yoySegmentRefs = [FY2024_SEGMENT_DATA.Q1, FY2024_SEGMENT_DATA.Q2, FY2024_SEGMENT_DATA.Q3, FY2024_SEGMENT_DATA.Q4, Q1_2025_REF, Q2_2025_REF];
 
     /** Match yearly model: Chart.js legends, axes, datalabels (app/yearly/model.js) */
     const CHART_TYPOGRAPHY = {
@@ -851,16 +933,46 @@ function initializeCharts() {
         dataLabelCompact: { size: 11, weight: '700', family: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif" }
     };
     const legendLabelStyle = {
-        color: '#111827',
-        boxWidth: 14,
-        padding: 12,
+        color: '#374151',
+        usePointStyle: true,
+        pointStyle: 'rectRounded',
+        boxWidth: 10,
+        boxHeight: 10,
+        padding: 14,
         font: CHART_TYPOGRAPHY.legend
     };
     const axisTickStyle = {
-        color: '#111827',
+        color: '#4b5563',
         font: CHART_TYPOGRAPHY.axis,
         maxRotation: 0,
         autoSkip: true
+    };
+    const tooltipStyle = {
+        backgroundColor: 'rgba(17, 24, 39, 0.92)',
+        titleColor: '#e0f2fe',
+        bodyColor: '#f9fafb',
+        bodyFont: { family: CHART_TYPOGRAPHY.legend.family, size: 12, weight: '400' },
+        titleFont: { family: CHART_TYPOGRAPHY.legend.family, size: 12, weight: '700' },
+        padding: 12,
+        cornerRadius: 8,
+        boxPadding: 6,
+        caretSize: 6,
+        displayColors: true
+    };
+    // Rounded, softly-capped bars everywhere
+    const BAR_STYLE = {
+        borderRadius: { topLeft: 6, topRight: 6, bottomLeft: 0, bottomRight: 0 },
+        borderSkipped: false,
+        maxBarThickness: 58,
+        categoryPercentage: 0.72,
+        barPercentage: 0.9
+    };
+    const STACKED_BAR_STYLE = {
+        borderRadius: 3,
+        borderSkipped: false,
+        maxBarThickness: 58,
+        categoryPercentage: 0.72,
+        barPercentage: 0.9
     };
 
     const commonOptions = {
@@ -884,19 +996,17 @@ function initializeCharts() {
                 padding: { top: 2, bottom: 0 },
                 font: CHART_TYPOGRAPHY.dataLabel
             },
-            tooltip: {
-                bodyFont: { family: CHART_TYPOGRAPHY.legend.family, size: 12, weight: '400' },
-                titleFont: { family: CHART_TYPOGRAPHY.legend.family, size: 12, weight: '600' },
-                padding: 10
-            }
+            tooltip: tooltipStyle
         },
         scales: {
             y: {
                 beginAtZero: true,
-                grid: { color: 'rgba(0, 0, 0, 0.05)' },
-                ticks: axisTickStyle
+                border: { display: false },
+                grid: { color: 'rgba(100, 116, 139, 0.10)', drawTicks: false },
+                ticks: { ...axisTickStyle, padding: 8 }
             },
             x: {
+                border: { display: false },
                 grid: { display: false },
                 ticks: axisTickStyle
             }
@@ -913,9 +1023,10 @@ function initializeCharts() {
                 datasets: [{
                     label: 'Net Revenue ($M)',
                     data: [],
-                    backgroundColor: 'rgba(0, 165, 229, 0.7)',
-                    borderColor: '#00A5E5',
-                    borderWidth: 2
+                    backgroundColor: QCOLORS.cyanFill,
+                    borderColor: QCOLORS.cyan,
+                    borderWidth: 0,
+                    ...BAR_STYLE
                 }]
             },
             options: {
@@ -955,16 +1066,18 @@ function initializeCharts() {
                     {
                         label: 'Net Income ($M)',
                         data: [],
-                        backgroundColor: 'rgba(76, 175, 80, 0.7)',
-                        borderColor: '#4caf50',
-                        borderWidth: 2
+                        backgroundColor: QCOLORS.greenFill,
+                        borderColor: QCOLORS.green,
+                        borderWidth: 0,
+                        ...STACKED_BAR_STYLE
                     },
                     {
                         label: '$CHYM Termination Fee',
                         data: [],
-                        backgroundColor: 'rgba(255, 152, 0, 0.85)',
-                        borderColor: '#ff9800',
-                        borderWidth: 2
+                        backgroundColor: QCOLORS.amberFill,
+                        borderColor: QCOLORS.amber,
+                        borderWidth: 0,
+                        ...STACKED_BAR_STYLE
                     }
                 ]
             },
@@ -1027,9 +1140,9 @@ function initializeCharts() {
             data: {
                 labels: [],
                 datasets: [
-                    { label: 'Lending', data: [], backgroundColor: 'rgba(0, 165, 229, 0.8)', borderColor: '#00A5E5', borderWidth: 1 },
-                    { label: 'Tech Platform', data: [], backgroundColor: 'rgba(156, 39, 176, 0.7)', borderColor: '#9c27b0', borderWidth: 1 },
-                    { label: 'Financial Services', data: [], backgroundColor: 'rgba(76, 175, 80, 0.7)', borderColor: '#4caf50', borderWidth: 1 }
+                    { label: 'Lending', data: [], backgroundColor: QCOLORS.cyanFill, borderColor: QCOLORS.cyan, borderWidth: 0, ...STACKED_BAR_STYLE },
+                    { label: 'Tech Platform', data: [], backgroundColor: QCOLORS.periwinkleFill, borderColor: QCOLORS.periwinkle, borderWidth: 0, ...STACKED_BAR_STYLE },
+                    { label: 'Financial Services', data: [], backgroundColor: QCOLORS.greenFill, borderColor: QCOLORS.green, borderWidth: 0, ...STACKED_BAR_STYLE }
                 ]
             },
             options: {
@@ -1045,6 +1158,8 @@ function initializeCharts() {
                         ...commonOptions.plugins.datalabels,
                         anchor: 'center',
                         align: 'center',
+                        // White on solid actual fills; dark on the light projected column
+                        color: (ctx) => (ctx.dataIndex === ctx.chart.data.labels.length - 1 ? '#111827' : '#ffffff'),
                         font: CHART_TYPOGRAPHY.dataLabelCompact,
                         formatter: (value, context) => {
                             if (value <= 100) return '';
@@ -1082,9 +1197,9 @@ function initializeCharts() {
             data: {
                 labels: [],
                 datasets: [
-                    { label: 'Lending', data: [], backgroundColor: 'rgba(0, 165, 229, 0.85)', borderColor: '#00A5E5', borderWidth: 1 },
-                    { label: 'Tech Platform', data: [], backgroundColor: 'rgba(156, 39, 176, 0.75)', borderColor: '#9c27b0', borderWidth: 1 },
-                    { label: 'Financial Services', data: [], backgroundColor: 'rgba(76, 175, 80, 0.75)', borderColor: '#4caf50', borderWidth: 1 }
+                    { label: 'Lending', data: [], backgroundColor: QCOLORS.cyanFill, borderColor: QCOLORS.cyan, borderWidth: 0, ...STACKED_BAR_STYLE },
+                    { label: 'Tech Platform', data: [], backgroundColor: QCOLORS.periwinkleFill, borderColor: QCOLORS.periwinkle, borderWidth: 0, ...STACKED_BAR_STYLE },
+                    { label: 'Financial Services', data: [], backgroundColor: QCOLORS.greenFill, borderColor: QCOLORS.green, borderWidth: 0, ...STACKED_BAR_STYLE }
                 ]
             },
             options: {
@@ -1106,6 +1221,7 @@ function initializeCharts() {
                         ...commonOptions.plugins.datalabels,
                         anchor: 'center',
                         align: 'center',
+                        color: '#ffffff',
                         font: CHART_TYPOGRAPHY.dataLabelCompact,
                         formatter: (v) => (v >= 6 ? v.toFixed(0) + '%' : '')
                     }
@@ -1127,9 +1243,11 @@ function initializeCharts() {
                         type: 'bar',
                         label: 'Adj. Net Revenue Growth (%)',
                         data: rofPlaceholder(),
-                        backgroundColor: '#c8cdd4',
-                        borderColor: '#9ca3af',
-                        borderWidth: 1,
+                        backgroundColor: 'rgba(148, 163, 184, 0.55)',
+                        borderColor: QCOLORS.slate,
+                        borderWidth: 0,
+                        borderRadius: 3,
+                        borderSkipped: false,
                         stack: 'rule40',
                         order: 1,
                         datalabels: {
@@ -1144,9 +1262,11 @@ function initializeCharts() {
                         type: 'bar',
                         label: 'Adj. EBITDA Margin (%)',
                         data: rofPlaceholder(),
-                        backgroundColor: '#162a45',
-                        borderColor: '#0f172a',
-                        borderWidth: 1,
+                        backgroundColor: QCOLORS.navyFill,
+                        borderColor: QCOLORS.navy,
+                        borderWidth: 0,
+                        borderRadius: 3,
+                        borderSkipped: false,
                         stack: 'rule40',
                         order: 1,
                         datalabels: {
@@ -1211,7 +1331,7 @@ function initializeCharts() {
                                 const meta = chart?.$rule40Meta;
                                 if (!meta || i === undefined) return '';
                                 const suffix =
-                                    i === RULE_OF_40_LABELS.length - 1 ? ' · Q1 FY26 from model sliders' : '';
+                                    i === RULE_OF_40_LABELS.length - 1 ? ' · Q2 FY26 from model sliders' : '';
                                 return (
                                     'Rule of 40: ' +
                                     meta.total[i].toFixed(1) +
@@ -1260,9 +1380,10 @@ function initializeCharts() {
                 datasets: [{
                     label: 'EPS (cents)',
                     data: [],
-                    backgroundColor: 'rgba(0, 165, 229, 0.7)',
-                    borderColor: '#00A5E5',
-                    borderWidth: 2
+                    backgroundColor: QCOLORS.cyanFill,
+                    borderColor: QCOLORS.cyan,
+                    borderWidth: 0,
+                    ...BAR_STYLE
                 }]
             },
             options: {
@@ -1288,16 +1409,23 @@ function initializeCharts() {
                 datasets: [{
                     label: 'Members (M)',
                     data: [],
-                    borderColor: '#00A5E5',
-                    backgroundColor: 'rgba(0, 165, 229, 0.1)',
+                    borderColor: QCOLORS.cyan,
+                    backgroundColor: (context) => {
+                        const { ctx, chartArea } = context.chart;
+                        if (!chartArea) return 'rgba(0, 165, 229, 0.10)';
+                        const g = ctx.createLinearGradient(0, chartArea.top, 0, chartArea.bottom);
+                        g.addColorStop(0, 'rgba(0, 165, 229, 0.22)');
+                        g.addColorStop(1, 'rgba(0, 165, 229, 0.02)');
+                        return g;
+                    },
                     tension: 0.4,
                     fill: true,
                     borderWidth: 3,
-                    pointRadius: 6,
-                    pointBackgroundColor: '#00A5E5',
-                    pointBorderColor: '#ffffff',
-                    pointBorderWidth: 2,
-                    pointHoverRadius: 8
+                    pointRadius: 5,
+                    pointBackgroundColor: '#ffffff',
+                    pointBorderColor: QCOLORS.cyan,
+                    pointBorderWidth: 2.5,
+                    pointHoverRadius: 7
                 }]
             },
             options: {
@@ -1337,16 +1465,23 @@ function initializeCharts() {
                 datasets: [{
                     label: 'Products (M)',
                     data: [],
-                    borderColor: '#9c27b0',
-                    backgroundColor: 'rgba(156, 39, 176, 0.1)',
+                    borderColor: QCOLORS.periwinkle,
+                    backgroundColor: (context) => {
+                        const { ctx, chartArea } = context.chart;
+                        if (!chartArea) return 'rgba(123, 140, 222, 0.10)';
+                        const g = ctx.createLinearGradient(0, chartArea.top, 0, chartArea.bottom);
+                        g.addColorStop(0, 'rgba(123, 140, 222, 0.22)');
+                        g.addColorStop(1, 'rgba(123, 140, 222, 0.02)');
+                        return g;
+                    },
                     tension: 0.4,
                     fill: true,
                     borderWidth: 3,
-                    pointRadius: 6,
-                    pointBackgroundColor: '#9c27b0',
-                    pointBorderColor: '#ffffff',
-                    pointBorderWidth: 2,
-                    pointHoverRadius: 8
+                    pointRadius: 5,
+                    pointBackgroundColor: '#ffffff',
+                    pointBorderColor: QCOLORS.periwinkle,
+                    pointBorderWidth: 2.5,
+                    pointHoverRadius: 7
                 }]
             },
             options: {
@@ -1371,10 +1506,10 @@ function initializeCharts() {
             data: {
                 labels: [],
                 datasets: [
-                    { label: 'Sales & Marketing', data: [], backgroundColor: 'rgba(244, 67, 54, 0.7)', borderColor: '#f44336', borderWidth: 1 },
-                    { label: 'G&A', data: [], backgroundColor: 'rgba(255, 152, 0, 0.7)', borderColor: '#ff9800', borderWidth: 1 },
-                    { label: 'Technology', data: [], backgroundColor: 'rgba(33, 150, 243, 0.7)', borderColor: '#2196f3', borderWidth: 1 },
-                    { label: 'Cost of Ops', data: [], backgroundColor: 'rgba(158, 158, 158, 0.7)', borderColor: '#9e9e9e', borderWidth: 1 }
+                    { label: 'Sales & Marketing', data: [], backgroundColor: QCOLORS.roseFill, borderColor: QCOLORS.rose, borderWidth: 0, ...STACKED_BAR_STYLE },
+                    { label: 'G&A', data: [], backgroundColor: QCOLORS.amberFill, borderColor: QCOLORS.amber, borderWidth: 0, ...STACKED_BAR_STYLE },
+                    { label: 'Technology', data: [], backgroundColor: QCOLORS.tealFill, borderColor: QCOLORS.teal, borderWidth: 0, ...STACKED_BAR_STYLE },
+                    { label: 'Cost of Ops', data: [], backgroundColor: QCOLORS.slateFill, borderColor: QCOLORS.slate, borderWidth: 0, ...STACKED_BAR_STYLE }
                 ]
             },
             options: {
@@ -1390,6 +1525,7 @@ function initializeCharts() {
                         ...commonOptions.plugins.datalabels,
                         anchor: 'center',
                         align: 'center',
+                        color: '#ffffff',
                         font: CHART_TYPOGRAPHY.dataLabelCompact,
                         formatter: (v) => v >= 130 ? '$' + v + 'M' : ''
                     }
@@ -1408,16 +1544,23 @@ function initializeCharts() {
                 datasets: [{
                     label: 'Net Margin %',
                     data: [],
-                    borderColor: '#4caf50',
-                    backgroundColor: 'rgba(76, 175, 80, 0.1)',
+                    borderColor: QCOLORS.green,
+                    backgroundColor: (context) => {
+                        const { ctx, chartArea } = context.chart;
+                        if (!chartArea) return 'rgba(34, 160, 107, 0.10)';
+                        const g = ctx.createLinearGradient(0, chartArea.top, 0, chartArea.bottom);
+                        g.addColorStop(0, 'rgba(34, 160, 107, 0.22)');
+                        g.addColorStop(1, 'rgba(34, 160, 107, 0.02)');
+                        return g;
+                    },
                     tension: 0.4,
                     fill: true,
                     borderWidth: 3,
-                    pointRadius: 6,
-                    pointBackgroundColor: '#4caf50',
-                    pointBorderColor: '#ffffff',
-                    pointBorderWidth: 2,
-                    pointHoverRadius: 8
+                    pointRadius: 5,
+                    pointBackgroundColor: '#ffffff',
+                    pointBorderColor: QCOLORS.green,
+                    pointBorderWidth: 2.5,
+                    pointHoverRadius: 7
                 }]
             },
             options: {
@@ -1451,9 +1594,10 @@ function initializeCharts() {
                 datasets: [{
                     label: 'EBITDA ($M)',
                     data: [],
-                    backgroundColor: 'rgba(0, 165, 229, 0.7)',
-                    borderColor: '#00A5E5',
-                    borderWidth: 2
+                    backgroundColor: QCOLORS.tealFill,
+                    borderColor: QCOLORS.teal,
+                    borderWidth: 0,
+                    ...BAR_STYLE
                 }]
             },
             options: {
@@ -1492,11 +1636,11 @@ function initializeCharts() {
         segmentGrowthChart = new Chart(segmentGrowthCtx.getContext('2d'), {
             type: 'bar',
             data: {
-                labels: ['Q1→Q2', 'Q2→Q3', 'Q3→Q4', "Q4→Q1'26"],
+                labels: ['Q1→Q2', 'Q2→Q3', 'Q3→Q4', "Q4→Q1'26", "Q1→Q2'26"],
                 datasets: [
-                    { label: 'Lending', data: [], backgroundColor: 'rgba(0, 165, 229, 0.7)', borderColor: '#00A5E5', borderWidth: 2 },
-                    { label: 'Tech Platform', data: [], backgroundColor: 'rgba(255, 193, 7, 0.7)', borderColor: '#FFC107', borderWidth: 2 },
-                    { label: 'Financial Services', data: [], backgroundColor: 'rgba(76, 175, 80, 0.7)', borderColor: '#4caf50', borderWidth: 2 }
+                    { label: 'Lending', data: [], backgroundColor: QCOLORS.cyanFill, borderColor: QCOLORS.cyan, borderWidth: 0, borderRadius: 4, borderSkipped: false, maxBarThickness: 34 },
+                    { label: 'Tech Platform', data: [], backgroundColor: QCOLORS.periwinkleFill, borderColor: QCOLORS.periwinkle, borderWidth: 0, borderRadius: 4, borderSkipped: false, maxBarThickness: 34 },
+                    { label: 'Financial Services', data: [], backgroundColor: QCOLORS.greenFill, borderColor: QCOLORS.green, borderWidth: 0, borderRadius: 4, borderSkipped: false, maxBarThickness: 34 }
                 ]
             },
             options: {
@@ -1522,5 +1666,5 @@ function initializeCharts() {
         });
     }
     
-    console.log('Quarterly charts initialized (incl. Segment Mix & Rule of 40; Q1–Q4 FY25 + Q1 FY26)');
+    console.log('Quarterly charts initialized (Q1–Q4 FY25 + Q1 FY26 actual + Q2 FY26 estimate)');
 }
